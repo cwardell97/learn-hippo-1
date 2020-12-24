@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name=penalty2pol-cmpt.9-lowsim-v1
+exp_name='vary-test-penalty'
 n_epoch=1000
 n_branch=4
 
