@@ -9,7 +9,7 @@ from exp_tz import run_tz
 from utils.params import P
 from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname, load_env_metadata
-log_root = '../log/'
+log_root = '/Users/carsonwardell/Desktop/Thesis/log/'
 
 exp_name = 'vary-test-penalty'
 def_prob = None
