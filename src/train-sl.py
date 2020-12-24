@@ -159,9 +159,10 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     else:
         optimizer = optimizer_rl
 
-    [results, metrics] = run_tz(
+    [results, metrics,  training_data] = run_tz(
         agent, optimizer, task, p, n_examples,
         supervised=supervised, fix_cond=None, learning=True, get_cache=False,
+        get_data=True,
     )
 
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
@@ -283,7 +284,7 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,
         fix_cond=fix_cond, fix_penalty=fix_penalty,
-        slience_recall_time=slience_recall_time, scramble=scramble
+        slience_recall_time=slience_recall_time, scramble=scramble, 
     )
     # save the data
     test_params = [fix_penalty, pad_len_test, slience_recall_time]
@@ -291,6 +292,7 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
         log_subpath, epoch_load, test_params)
     test_data_fname = get_test_data_fname(
         n_examples_test, fix_cond, scramble)
-    test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY}
+    test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY,
+    'training_data': training_data}
     fpath = os.path.join(test_data_dir, test_data_fname)
     pickle_save_dict(test_data_dict, fpath)
