@@ -32,7 +32,7 @@ attach_cond = 0
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = 0
+p_rm_ob_rcl_load = .3
 
 # testing params
 pad_len_test = 0
@@ -109,6 +109,11 @@ for scramble in scramble_options:
                 if agent is None:
                     print('Agent DNE')
                     continue
+
+                # freeze layers
+
+
+
 
                 # training objective
                 np.random.seed(seed)
