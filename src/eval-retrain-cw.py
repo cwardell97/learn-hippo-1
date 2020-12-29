@@ -47,7 +47,7 @@ similarity_min_test = 0
 '''loop over conditions for testing'''
 slience_recall_times = [range(n_param), None]
 
-subj_ids = np.arange(15)
+subj_ids = np.arange(1)
 
 penaltys_train = [4]
 penaltys_test = np.array([2])
@@ -110,9 +110,12 @@ for scramble in scramble_options:
                     print('Agent DNE')
                     continue
 
-                # freeze layers
+                # agent.parameters
 
-
+                # freeze memory controlling layer
+                for param in agent.parameters():
+                    param.requires_grad = False
+                agent.i2h.requires_grad_ = True
 
 
                 # training objective
@@ -124,6 +127,7 @@ for scramble in scramble_options:
                     fix_cond=fix_cond, fix_penalty=fix_penalty,
                     slience_recall_time=slience_recall_time, scramble=scramble
                 )
+
 
                 # save the data
                 test_params = [fix_penalty, pad_len_test, slience_recall_time]
