@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 import pdb
+import random as rd
 
 from analysis import entropy
 from utils.utils import to_sqnp
@@ -13,13 +14,17 @@ from models import get_reward, compute_returns, compute_a2c_loss
 def run_ms(
         agent, optimizer, task, p, n_examples, supervised,
         fpath, fix_cond=None, fix_penalty=None,
-        slience_recall_time=None, scramble=False,
+        slience_recall_time=None,
         learning=True, get_cache=True, get_data=False,
 ):
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
+    X_train = np.array(training_data[0])
+    Y_train = np.array(training_data[1])
 
-    # sample data
+
+
+    '''# sample data (not needed)
     X, Y = task.sample(n_examples, to_torch=True)
     # logger
     log_return, log_pi_ent = 0, 0
@@ -28,18 +33,26 @@ def run_ms(
     log_dist_a = [[] for _ in range(n_examples)]
     log_targ_a = [[] for _ in range(n_examples)]
     log_cache = [None] * n_examples
+    '''
 
     for i in range(n_examples):
         # pick a condition
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         # get the example for this trial
-        X_i, Y_i = X[i], Y[i]
+        #X_i, Y_i = X[i], Y[i]
+        # load a single example (maybe just go through iteratively)
+        j = rd.randint(0,(n_examples_test-1))
+        X_train_j = X_train[j,:,:]
+        Y_train_j = Y_train[j,:,:]
+        # take from XY if X = 1
 
+
+        ''' (not needed)
         if scramble:
-            X_i, Y_i = time_scramble(X_i, Y_i, task)
+            X_i, Y_i = time_scramble(X_i, Y_i, task)'''
 
         # get time info
-        T_total = np.shape(X_i)[0]
+        T_total = X_train_j.shape[0]
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
@@ -67,6 +80,7 @@ def run_ms(
         for t in range(T_total):
             t_relative = t % T_part
             in_2nd_part = t >= T_part
+''' add in the if first timestep here '''
 
             if not in_2nd_part:
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
