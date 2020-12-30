@@ -115,7 +115,7 @@ for scramble in scramble_options:
                 # freeze memory controlling layer
                 for param in agent.parameters():
                     param.requires_grad = False
-                agent.i2h.requires_grad_ = True
+                agent.hpc.requires_grad_ = True
 
 
                 # training objective
@@ -147,7 +147,38 @@ for scramble in scramble_options:
                 fpath = os.path.join(test_data_dir, test_data_fname)
                 pickle_save_dict(test_data_dict, fpath)
 
-testery = pickle_load_dict(fpath)
+testery = pickle_load_dict(fpath).pop('XY')
 
-len(testery)
-testery
+#testery.keys()
+#training = testery(['XY'])
+
+training_data = testery.pop('XY')
+
+print(training_data)
+
+len(training_data)
+
+X = training_data[0]
+Y = training_data[1]
+
+len(X)
+len(Y)
+
+print(Y)
+
+dd = hm[0]
+
+print(dd)
+
+len(dd)
+
+hh = dd[0]
+
+len(hh)
+
+hh.shape
+print(hh)
+
+import matplotlib.pyplot as plt
+plt.imshow(dd)
+plt.imshow(dd[:,0])
