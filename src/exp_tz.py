@@ -267,7 +267,7 @@ def run_ms(
         slience_recall_time=None, scramble=False,
         learning=True, get_cache=True, get_data=False,
 ):
-'''run the future simulations task'''
+    '''run the future simulations task'''
 
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
