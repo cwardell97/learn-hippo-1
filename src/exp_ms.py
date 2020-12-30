@@ -12,10 +12,13 @@ from models import get_reward, compute_returns, compute_a2c_loss
 
 def run_ms(
         agent, optimizer, task, p, n_examples, supervised,
-        fix_cond=None, fix_penalty=None,
+        fpath, fix_cond=None, fix_penalty=None,
         slience_recall_time=None, scramble=False,
         learning=True, get_cache=True, get_data=False,
 ):
+    # load training data
+    training_data = pickle_load_dict(fpath).pop('XY')
+
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
     # logger
