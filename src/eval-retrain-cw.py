@@ -8,7 +8,7 @@ from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
 from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
-    get_test_data_dir, get_test_data_fname, load_env_metadata
+    get_test_data_dir, get_test_data_fname, load_env_metadata, pickle_load_dict
 log_root = '/Users/carsonwardell/Desktop/Thesis/log/'
 
 exp_name = 'vary-test-penalty'
@@ -146,3 +146,8 @@ for scramble in scramble_options:
                         os.makedirs(test_data_dir)
                 fpath = os.path.join(test_data_dir, test_data_fname)
                 pickle_save_dict(test_data_dict, fpath)
+
+testery = pickle_load_dict(fpath)
+
+len(testery)
+testery
