@@ -35,16 +35,16 @@ class LCALSTM(nn.Module):
         self.input_dim = input_dim + 1
         self.rnn_hidden_dim = rnn_hidden_dim
         self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
-        # rnn module
+        # rnn module (input to hidden is h to x)
         self.i2h = nn.Linear(self.input_dim, self.n_hidden_total)
         self.h2h = nn.Linear(rnn_hidden_dim, self.n_hidden_total)
         # deicion module
-        self.ih = nn.Linear(rnn_hidden_dim, dec_hidden_dim)
-        self.actor = nn.Linear(dec_hidden_dim, output_dim)
+        self.ih = nn.Linear(rnn_hidden_dim, dec_hidden_dim) #input to hidden
+        self.actor = nn.Linear(dec_hidden_dim, output_dim) #
         self.critic = nn.Linear(dec_hidden_dim, 1)
         # memory
-        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, N_SSIG)
-        self.em = EM(dict_len, rnn_hidden_dim, kernel)
+        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, N_SSIG) #this is the retrieval control layer
+        self.em = EM(dict_len, rnn_hidden_dim, kernel) # this has no network layer
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
@@ -88,10 +88,10 @@ class LCALSTM(nn.Module):
         # unpack activity
         (h_prev, c_prev) = hc_prev
         h_prev = h_prev.view(h_prev.size(1), -1)
-        c_prev = c_prev.view(c_prev.size(1), -1)
+        c_prev = c_prev.view(c_prev.size(1), -1) # cell state from t-1
         x_t = x_t.view(x_t.size(1), -1)
         # transform the input info
-        preact = self.i2h(x_t) + self.h2h(h_prev)
+        preact = self.i2h(x_t) + self.h2h(h_prev) #preactivation because it hasnt been transform by nonlin
         # get all gate values
         gates = preact[:, : N_VSIG * self.rnn_hidden_dim].sigmoid()
         c_t_new = preact[:, N_VSIG * self.rnn_hidden_dim + N_SSIG:].tanh()
