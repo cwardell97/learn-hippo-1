@@ -41,18 +41,20 @@ def run_ms(
         # get the example for this trial
         #X_i, Y_i = X[i], Y[i]
         # load a single example (maybe just go through iteratively)
-        j = rd.randint(0,(n_examples_test-1))
-        X_train_j = X_train[j,:,:]
-        Y_train_j = Y_train[j,:,:]
-        # take from XY if X = 1
+        #j = rd.randint(0,(n_examples_test-1))
+        X_i = X_train[i,:,:]
+        Y_i = Y_train[i,:,:]
 
+        # set first input randomly from X_i
+        j = rd.randint(0,(X_i.shape[0]-1))
+        X_i_t0 = X_i[j,:]
 
         ''' (not needed)
         if scramble:
             X_i, Y_i = time_scramble(X_i, Y_i, task)'''
 
         # get time info
-        T_total = X_train_j.shape[0]
+        T_total = X_i.shape[0]
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
@@ -103,6 +105,9 @@ def run_ms(
             a_t, p_a_t = agent.pick_action(pi_a_t)
             # get reward
             r_t = get_reward(a_t, Y_i[t], penalty_val)
+
+            # convert model output to onehotinput
+
 
             # cache the results for later RL loss computation
             rewards.append(r_t)
@@ -417,3 +422,13 @@ def run_ms(
         training_data = [X_array_list, Y_array_list]
         out.append(training_data)
     return out
+
+def io_convert(a_t, t, T, A):
+    '''converts model output to one-hot vector input format
+    '''
+    time_oh_vec = np.identity(T)[t]
+    time_q_vec = np.identity(T)[t]
+    obs_val_oh_vec = np.identity(A)[a_t]
+
+
+    return np.concatenate([time_oh_vec,obs_val_oh_vec, time_oh_vec])
