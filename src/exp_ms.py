@@ -47,7 +47,7 @@ def run_ms(
 
         # set first input randomly from X_i
         j = rd.randint(0,(X_i.shape[0]-1))
-        X_i_t0 = X_i[j,:]
+        X_i_t = X_i[j,:]
 
         ''' (not needed)
         if scramble:
@@ -98,7 +98,7 @@ def run_ms(
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
-            x_it = append_prev_info(X_i[t], [penalty_rep])
+            x_it = append_prev_info(X_i_t, [penalty_rep])
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
@@ -106,8 +106,8 @@ def run_ms(
             # get reward
             r_t = get_reward(a_t, Y_i[t], penalty_val)
 
-            # convert model output to onehotinput
-
+            # convert model output to onehotinput for t+1
+            X_i_t = io_convert(a_t, t, T, A)
 
             # cache the results for later RL loss computation
             rewards.append(r_t)
