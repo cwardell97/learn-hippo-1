@@ -106,8 +106,8 @@ def run_ms(
             # get reward
             r_t = get_reward(a_t, Y_i[t], penalty_val)
 
-            # convert model output to onehotinput for t+1
-            X_i_t = io_convert(a_t, t, T, A)
+            # convert model output to onehotinput (action, time, total timesteps, total vals)
+            X_i_t = io_convert(a_t, t, Y_i.shape[0], Y_i.shape[1])
 
             # cache the results for later RL loss computation
             rewards.append(r_t)
