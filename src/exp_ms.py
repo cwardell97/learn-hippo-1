@@ -8,7 +8,7 @@ from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
-from models import get_reward, compute_returns, compute_a2c_loss
+from models import get_reward_ms, compute_returns, compute_a2c_loss
 
 
 def run_ms(
@@ -82,7 +82,6 @@ def run_ms(
         for t in range(T_total):
             t_relative = t % T_part
             in_2nd_part = t >= T_part
-''' add in the if first timestep here '''
 
             if not in_2nd_part:
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
@@ -104,9 +103,9 @@ def run_ms(
             # after delay period, compute loss
             a_t, p_a_t = agent.pick_action(pi_a_t)
             # get reward
-            r_t = get_reward(a_t, Y_i[t], penalty_val)
+            r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
-            # convert model output to onehotinput (action, time, total timesteps, total vals)
+            # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
             X_i_t = io_convert(a_t, t, Y_i.shape[0], Y_i.shape[1])
 
             # cache the results for later RL loss computation
