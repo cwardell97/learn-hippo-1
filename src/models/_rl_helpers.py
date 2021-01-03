@@ -86,7 +86,7 @@ def get_reward_ms(a_t, y_t, penalty, allow_dk=True):
     """define the reward function at time t for exp_ms
     High level function
     ----------
-    penalize model for 'dont know' responses
+    penalize model for 'dont know' responses 
 
     Parameters
     ----------
