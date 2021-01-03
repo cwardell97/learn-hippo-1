@@ -5,7 +5,7 @@ import numpy as np
 from itertools import product
 from models import LCALSTM as Agent
 from task import SequenceLearning
-from exp_tz import run_tz
+from exp_ms import run_ms
 from utils.params import P
 from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname, load_env_metadata, pickle_load_dict
@@ -147,38 +147,35 @@ for scramble in scramble_options:
                 fpath = os.path.join(test_data_dir, test_data_fname)
                 pickle_save_dict(test_data_dict, fpath)
 
-testery = pickle_load_dict(fpath).pop('XY')
+training_data = pickle_load_dict(fpath).pop('XY')
 
 #testery.keys()
 #training = testery(['XY'])
 
-training_data = testery.pop('XY')
+#training_data = testery
+
 
 print(training_data)
 
-len(training_data)
+X = np.array(training_data[0])
+Y = np.array(training_data[1])
 
-X = training_data[0]
-Y = training_data[1]
+X.shape
+Y.shape
 
-len(X)
-len(Y)
 
-print(Y)
+import random as rd
 
-dd = hm[0]
+i = rd.randint(0,(n_examples_test-1))
+print(i)
+X_i = X[i,:,:]
+Y_i = Y[i,:,:]
 
-print(dd)
-
-len(dd)
-
-hh = dd[0]
-
-len(hh)
-
-hh.shape
-print(hh)
-
+Y_i.shape[1]
+X_i.shape[0]
 import matplotlib.pyplot as plt
-plt.imshow(dd)
-plt.imshow(dd[:,0])
+plt.imshow(X_i)
+plt.imshow(Y_i)
+
+j = rd.randint(0,(X_i.shape[0]-1))
+X_i_t0 = X_i[j,:]
