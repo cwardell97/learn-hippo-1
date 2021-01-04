@@ -10,12 +10,12 @@ from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
 from models import compute_returns, compute_a2c_loss, get_reward_ms
 
+''' check thatfix_cond and supervised and cond_i have all been removed '''
 
 def run_ms(
-        fpath, agent, optimizer, task, p, n_examples, supervised,
-        fix_cond=None, fix_penalty=None,
-        slience_recall_time=None,
-        learning=True, get_cache=True, get_data=False,
+        agent, optimizer, task, p, n_examples, fpath,
+        fix_penalty=None, slience_recall_time=None,
+        learning=True, get_cache=True, get_data=False
 ):
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
@@ -37,7 +37,8 @@ def run_ms(
 
     for i in range(n_examples):
         # pick a condition
-        cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
+        cond_i = 'DM'
+        # cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         # get the example for this trial
         #X_i, Y_i = X[i], Y[i]
         # load a single example (maybe just go through iteratively)
@@ -362,7 +363,7 @@ def run_ms(
             # after delay period, compute loss
             a_t, p_a_t = agent.pick_action(pi_a_t)
             # get reward
-            r_t = get_reward(a_t, Y_i[t], penalty_val)
+            r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
             # cache the results for later RL loss computation
             rewards.append(r_t)
