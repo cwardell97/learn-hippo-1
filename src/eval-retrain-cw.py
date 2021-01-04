@@ -44,6 +44,21 @@ n_examples_test = 256
 similarity_max_test = .9
 similarity_min_test = 0
 
+# create fpath
+test_params = [fix_penalty, pad_len_test, slience_recall_time]
+test_data_dir, _ = get_test_data_dir(
+    log_subpath, epoch_load, test_params)
+test_data_fname = get_test_data_fname(
+    n_examples_test, fix_cond, scramble)
+
+if enc_size_test != enc_size:
+    test_data_dir = os.path.join(
+        test_data_dir, f'enc_size_test-{enc_size_test}'
+    )
+    if not os.path.exists(test_data_dir):
+        os.makedirs(test_data_dir)
+fpath = os.path.join(test_data_dir, test_data_fname)
+
 '''loop over conditions for testing'''
 slience_recall_times = [range(n_param), None]
 
@@ -121,8 +136,8 @@ for scramble in scramble_options:
                 # training objective
                 np.random.seed(seed)
                 torch.manual_seed(seed)
-                [results, metrics, XY] = run_tz(
-                    agent, optimizer, task, p, n_examples_test,
+                [results, metrics, XY] = run_ms(
+                    agent, optimizer, task, p, n_examples_test, fpath,
                     supervised=False, learning=False, get_data=True,
                     fix_cond=fix_cond, fix_penalty=fix_penalty,
                     slience_recall_time=slience_recall_time, scramble=scramble
