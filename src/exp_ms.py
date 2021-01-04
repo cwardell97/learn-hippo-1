@@ -8,7 +8,7 @@ from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
-from models import get_reward_ms, compute_returns, compute_a2c_loss
+from models import compute_returns, compute_a2c_loss, get_reward_ms 
 
 
 def run_ms(
