@@ -44,20 +44,6 @@ n_examples_test = 256
 similarity_max_test = .9
 similarity_min_test = 0
 
-# create fpath
-test_params = [fix_penalty, pad_len_test, slience_recall_time]
-test_data_dir, _ = get_test_data_dir(
-    log_subpath, epoch_load, test_params)
-test_data_fname = get_test_data_fname(
-    n_examples_test, fix_cond, scramble)
-
-if enc_size_test != enc_size:
-    test_data_dir = os.path.join(
-        test_data_dir, f'enc_size_test-{enc_size_test}'
-    )
-    if not os.path.exists(test_data_dir):
-        os.makedirs(test_data_dir)
-fpath = os.path.join(test_data_dir, test_data_fname)
 
 '''loop over conditions for testing'''
 slience_recall_times = [range(n_param), None]
@@ -95,6 +81,21 @@ for scramble in scramble_options:
                     subj_id, p, log_root=log_root, mkdir=False, verbose=False
                 )
 
+                # create fpath
+                test_params = [fix_penalty, pad_len_test, slience_recall_time]
+                test_data_dir, _ = get_test_data_dir(
+                    log_subpath, epoch_load, test_params)
+                test_data_fname = get_test_data_fname(
+                    n_examples_test, fix_cond, scramble)
+
+                if enc_size_test != enc_size:
+                    test_data_dir = os.path.join(
+                        test_data_dir, f'enc_size_test-{enc_size_test}'
+                    )
+                    if not os.path.exists(test_data_dir):
+                        os.makedirs(test_data_dir)
+                fpath = os.path.join(test_data_dir, test_data_fname)
+                
                 # init env
                 env_data = load_env_metadata(log_subpath)
                 def_path = env_data['def_path']
