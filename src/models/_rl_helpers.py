@@ -45,42 +45,6 @@ def get_reward(a_t, y_t, penalty, allow_dk=True):
     return torch.from_numpy(np.array(r_t)).type(torch.FloatTensor).data
     # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
-def get_reward(a_t, y_t, penalty, allow_dk=True):
-    """define the reward function at time t
-
-    Parameters
-    ----------
-    a_t : int
-        action
-    a_t_targ : int
-        target action
-    penalty : int
-        the penalty magnitude of making incorrect state prediction
-    allow_dk : bool
-        if True, then activating don't know makes r_t = 0, regardless of a_t
-
-    Returns
-    -------
-    torch.FloatTensor, scalar
-        immediate reward at time t
-
-    """
-    dk_id = y_t.size()[0]
-    # if y_t is all zeros (delay period), then action target DNE
-    if torch.all(y_t == 0):
-        # -1 is not in the range of a_t, so r_t = penalty unless a_t == dk
-        a_t_targ = torch.tensor(-1)
-    else:
-        a_t_targ = torch.argmax(y_t)
-    # compare action vs. target action
-    if a_t == dk_id and allow_dk:
-        r_t = 0
-    elif a_t_targ == a_t:
-        r_t = 1
-    else:
-        r_t = - penalty
-    return torch.from_numpy(np.array(r_t)).type(torch.FloatTensor).data
-    # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
 def get_reward_ms(a_t, y_t, penalty, allow_dk=True):
     """define the reward function at time t for exp_ms
