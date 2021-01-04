@@ -95,12 +95,14 @@ for scramble in scramble_options:
                     if not os.path.exists(test_data_dir):
                         os.makedirs(test_data_dir)
                 fpath = os.path.join(test_data_dir, test_data_fname)
-                
+
                 # init env
                 env_data = load_env_metadata(log_subpath)
                 def_path = env_data['def_path']
                 p.env.def_path = def_path
                 p.update_enc_size(enc_size_test)
+
+                fpath
 
                 task = SequenceLearning(
                     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
@@ -138,10 +140,11 @@ for scramble in scramble_options:
                 np.random.seed(seed)
                 torch.manual_seed(seed)
                 [results, metrics, XY] = run_ms(
-                    agent, optimizer, task, p, n_examples_test, fpath,
+                    agent, optimizer,
+                    task, p, n_examples_test,
                     supervised=False, learning=False, get_data=True,
                     fix_cond=fix_cond, fix_penalty=fix_penalty,
-                    slience_recall_time=slience_recall_time, scramble=scramble
+                    slience_recall_time=slience_recall_time, fpath=fpath
                 )
 
 
