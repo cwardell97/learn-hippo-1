@@ -8,12 +8,12 @@ from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
-from models import compute_returns, compute_a2c_loss, get_reward_ms 
+from models import compute_returns, compute_a2c_loss, get_reward_ms
 
 
 def run_ms(
-        agent, optimizer, task, p, n_examples, supervised,
-        fpath, fix_cond=None, fix_penalty=None,
+        fpath, agent, optimizer, task, p, n_examples, supervised,
+        fix_cond=None, fix_penalty=None,
         slience_recall_time=None,
         learning=True, get_cache=True, get_data=False,
 ):
@@ -105,6 +105,9 @@ def run_ms(
             # get reward
             r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
+            # if don't know, break
+            if y_t.size()[0] == a_t:
+                break
             # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
             X_i_t = io_convert(a_t, t, Y_i.shape[0], Y_i.shape[1])
 
