@@ -141,11 +141,13 @@ for scramble in scramble_options:
                 torch.manual_seed(seed)
                 [results, metrics, XY] = run_ms(
                     agent, optimizer,
-                    task, p, n_examples_test,
-                    supervised=False, learning=False, get_data=True,
-                    fix_cond=fix_cond, fix_penalty=fix_penalty,
-                    slience_recall_time=slience_recall_time, fpath=fpath
+                    task, p, n_examples_test, fpath,
+                    fix_penalty=fix_penalty, slience_recall_time=slience_recall_time,
+                    learning=False, get_data=True,
                 )
+
+
+
 
 
                 # save the data
