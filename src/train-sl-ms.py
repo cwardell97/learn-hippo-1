@@ -123,9 +123,6 @@ agent = Agent(
 
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
-# save experiment params initial weights
-save_all_params(log_subpath['data'], p)
-save_ckpt(0, log_subpath['ckpts'], agent, optimizer_sup)
 
 # create fig_path
 test_params = [fix_penalty, pad_len_test, slience_recall_time]
@@ -155,6 +152,9 @@ for param in agent.parameters():
     param.requires_grad = False
 agent.hpc.requires_grad_ = True
 
+# save experiment params initial weights
+save_all_params(log_subpath['data'], p)
+save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
 
 '''task definition'''
 log_freq = 200
