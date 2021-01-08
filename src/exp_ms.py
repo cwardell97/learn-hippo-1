@@ -4,13 +4,14 @@ import torch.nn.functional as F
 import pdb
 import random as rd
 
+
 from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
 from models import compute_returns, compute_a2c_loss, get_reward_ms
 
-''' check thatfix_cond and supervised and cond_i have all been removed '''
+''' check that supervised and cond_i have all been removed '''
 
 def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
