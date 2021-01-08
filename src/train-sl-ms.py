@@ -121,19 +121,6 @@ agent = Agent(
     dict_len=p.net.dict_len, cmpt=p.net.cmpt
 )
 
-# load model
-agent, optimizer = load_ckpt(
-    epoch_load, log_subpath['ckpts'], agent)
-
-# if data dir does not exsits ... skip
-if agent is None:
-    print('Agent DNE')
-
-# freeze memory controlling layer
-for param in agent.parameters():
-    param.requires_grad = False
-agent.hpc.requires_grad_ = True
-
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 # save experiment params initial weights
@@ -155,7 +142,18 @@ if enc_size_test != enc_size:
         os.makedirs(test_data_dir)
 fpath = os.path.join(test_data_dir, test_data_fname)
 
+# load model
+agent, optimizer = load_ckpt(
+    epoch_load, log_subpath['ckpts'], agent)
 
+# if data dir does not exsits ... skip
+if agent is None:
+    print('Agent DNE')
+
+# freeze memory controlling layer
+for param in agent.parameters():
+    param.requires_grad = False
+agent.hpc.requires_grad_ = True
 
 
 '''task definition'''
