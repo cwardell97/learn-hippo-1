@@ -47,12 +47,14 @@ similarity_min_test = 0
 '''loop over conditions for testing'''
 slience_recall_times = [range(n_param), None]
 
-subj_ids = np.arange(15)
+slience_recall_times
+
+subj_ids = [1]
 
 penaltys_train = [4]
 penaltys_test = np.array([2])
 
-all_conds = ['RM', 'DM', 'NM']
+all_conds = ['DM']
 scramble_options = [True, False]
 
 for scramble in scramble_options:
