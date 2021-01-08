@@ -81,7 +81,8 @@ n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
-
+# specify epoch to load
+epoch_load = 1000
 
 '''init'''
 seed_val = subj_id
