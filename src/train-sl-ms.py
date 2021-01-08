@@ -126,7 +126,6 @@ agent, optimizer = load_ckpt(
 # if data dir does not exsits ... skip
 if agent is None:
     print('Agent DNE')
-    continue
 
 # freeze memory controlling layer
 for param in agent.parameters():
