@@ -125,7 +125,7 @@ agent = Agent(
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 
 # create fig_path
-test_params = [fix_penalty, pad_len_test, slience_recall_time]
+test_params = [penalty, pad_len_test, slience_recall_time]
 test_data_dir, _ = get_test_data_dir(
     log_subpath, epoch_load, test_params)
 test_data_fname = get_test_data_fname(
@@ -178,7 +178,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [results, metrics, XY] = run_ms(
         agent, optimizer,
         task, p, n_examples_test, fpath,
-        fix_penalty=fix_penalty, slience_recall_time=slience_recall_time,
+        fix_penalty=penalty, slience_recall_time=slience_recall_time,
         learning=False, get_data=True,
     )
 
