@@ -138,7 +138,7 @@ test_data_dir, _ = get_test_data_dir(
 test_data_fname = get_test_data_fname(
     n_examples_test, fix_cond, scramble)
 
-if enc_size_test != enc_size:
+if enc_size != enc_size:
     test_data_dir = os.path.join(
         test_data_dir, f'enc_size_test-{enc_size_test}'
     )
