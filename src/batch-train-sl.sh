@@ -38,7 +38,7 @@ do
                     do
                         for n_hidden_dec in 128
                         do
-                            sbatch train-sl.sh $exp_name \
+                            sbatch train-sl-cw.sh $exp_name \
                                 ${subj_id} ${penalty} ${n_param} ${n_branch} \
                                 ${n_hidden} ${n_hidden_dec} ${eta} ${lr} \
                                 $n_epoch ${sup_epoch} \
