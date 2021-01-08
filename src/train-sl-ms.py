@@ -125,7 +125,7 @@ agent = Agent(
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 
 # create fig_path
-test_params = [penalty, pad_len_test, slience_recall_time]
+test_params = [penalty, pad_len, slience_recall_time]
 test_data_dir, _ = get_test_data_dir(
     log_subpath, epoch_load, test_params)
 test_data_fname = get_test_data_fname(
