@@ -124,7 +124,14 @@ agent = Agent(
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 
-# create fig_path
+# create f_path for pretrained model storage
+pad_len_test = 0
+p_rm_ob = 0
+n_examples_test = 256
+fix_cond = None
+slience_recall_time = None
+scramble = False
+
 test_params = [penalty, pad_len, slience_recall_time]
 test_data_dir, _ = get_test_data_dir(
     log_subpath, epoch_load, test_params)
