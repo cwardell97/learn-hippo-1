@@ -8,7 +8,7 @@ import seaborn as sns
 
 from models import LCALSTM as Agent
 from task import SequenceLearning
-from exp_tz import run_tz
+from exp_ms import run_ms
 from analysis import compute_behav_metrics, compute_acc, compute_dk
 from vis import plot_pred_acc_full
 from utils.params import P
