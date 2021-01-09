@@ -13,9 +13,7 @@ from analysis import compute_behav_metrics, compute_acc, compute_dk
 from vis import plot_pred_acc_full
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from utils.io import build_log_path, save_ckpt, save_all_params,  \
-    pickle_save_dict, get_test_data_dir, get_test_data_fname,   \
-    load_env_metadata, pickle_load_dict, load_ckpt
+from utils.io import build_log_path, save_ckpt, save_all_params, pickle_save_dict, get_test_data_dir, get_test_data_fname, load_env_metadata, pickle_load_dict, load_ckpt
 
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
