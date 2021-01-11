@@ -14,6 +14,7 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
 
+''' remove parser capability for now
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', default='test', type=str)
 parser.add_argument('--subj_id', default=99, type=int)
@@ -75,8 +76,42 @@ n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
+'''
 
+log_root = '/Users/carsonwardell/Desktop/Thesis/log/'
 
+exp_name = 'vary-test-penalty'
+def_prob = None
+n_def_tps = 0
+
+seed = 0
+supervised_epoch = 600
+epoch_load = 1000
+
+n_branch = 4
+n_param = 16
+enc_size = 16
+# enc_size_test = 8
+enc_size_test = enc_size
+n_event_remember = 2
+
+penalty_random = 1
+# testing param, ortho to the training directory
+attach_cond = 0
+# loading params
+pad_len_load = -1
+p_rm_ob_enc_load = .3
+p_rm_ob_rcl_load = .3
+
+# testing params
+pad_len_test = 0
+p_test = 0
+p_rm_ob_enc_test = p_test
+p_rm_ob_rcl_test = p_test
+n_examples_test = 256
+
+similarity_max_test = .9
+similarity_min_test = 0
 
 '''loop over conditions for testing'''
 
