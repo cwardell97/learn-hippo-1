@@ -122,7 +122,8 @@ agent = Agent(
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 
-# create f_path for pretrained model storage
+'''
+# create path for pretrained model storage
 pad_len_test = 0
 p_rm_ob = 0
 n_examples_test = 256
@@ -143,6 +144,9 @@ if enc_size != enc_size:
     if not os.path.exists(test_data_dir):
         os.makedirs(test_data_dir)
 fpath = os.path.join(test_data_dir, test_data_fname)
+'''
+# hardcode pretrained model filepath 
+tpath = '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-0/data/epoch-1000/penalty-2/delay-0/srt-None/DM-n256.pkl'
 
 # load model
 agent, optimizer = load_ckpt(
@@ -182,7 +186,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     torch.manual_seed(seed_val)
     [results, metrics, XY] = run_ms(
         agent, optimizer,
-        task, p, n_examples_test, fpath,
+        task, p, n_examples_test, tpath,
         fix_penalty=penalty, slience_recall_time=slience_recall_time,
         learning=False, get_data=True,
     )
