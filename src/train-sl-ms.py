@@ -145,8 +145,10 @@ if enc_size != enc_size:
         os.makedirs(test_data_dir)
 fpath = os.path.join(test_data_dir, test_data_fname)
 '''
-# hardcode pretrained model filepath 
+# hardcode pretrained model filepath
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-0/data/epoch-1000/penalty-2/delay-0/srt-None/DM-n256.pkl'
+train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-0/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-0/data', 'figs': '//tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-0/figs'}
+
 
 # load model
 agent, optimizer = load_ckpt(
@@ -161,6 +163,8 @@ for param in agent.parameters():
     param.requires_grad = False
 agent.hpc.requires_grad_ = True
 
+# create logging dirs
+log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 # save experiment params initial weights
 save_all_params(log_subpath['data'], p)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
