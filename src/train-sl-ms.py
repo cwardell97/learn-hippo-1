@@ -190,7 +190,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     torch.manual_seed(seed_val)
     [results, metrics, XY] = run_ms(
         agent, optimizer,
-        task, p, n_examples_test, tpath,
+        task, p, n_examples, tpath,
         fix_penalty=penalty, slience_recall_time=slience_recall_time,
         learning=False, get_data=True,
     )
@@ -308,11 +308,12 @@ task = SequenceLearning(
 )
 
 for fix_penalty in np.arange(0, penalty + 1, 2):
-    [results, metrics, XY] = run_tz(
-        agent, optimizer, task, p, n_examples_test,
-        supervised=False, learning=False, get_data=True,
-        fix_cond=fix_cond, fix_penalty=fix_penalty,
-        slience_recall_time=slience_recall_time, scramble=scramble,
+    [results, metrics, XY] = run_ms(
+    agent, optimizer,
+    task, p, n_examples_test, tpath,
+    fix_penalty=penalty, slience_recall_time=slience_recall_time,
+    learning=False, get_data=True,
+)
     )
     # save the data
     test_params = [fix_penalty, pad_len_test, slience_recall_time]
