@@ -152,7 +152,7 @@ train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-
 
 # load model
 agent, optimizer = load_ckpt(
-    epoch_load, log_subpath['ckpts'], agent)
+    epoch_load, train_logsubpath['ckpts'], agent)
 
 # if data dir does not exsits ... skip
 if agent is None:
