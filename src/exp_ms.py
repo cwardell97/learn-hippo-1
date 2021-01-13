@@ -99,7 +99,7 @@ def run_ms(
             set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
-            x_it = append_prev_info(X_i_t, [penalty_rep])
+            x_it = append_prev_info(torch.from_numpy(X_i_t), [penalty_rep])
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
