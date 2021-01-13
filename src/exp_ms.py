@@ -96,8 +96,7 @@ def run_ms(
                 slience_recall(t_relative, in_2nd_part,
                                slience_recall_time, agent)
             # whether to encode
-            if not supervised:
-                set_encoding_flag(t, enc_times, cond_i, agent)
+            set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
             x_it = append_prev_info(X_i_t, [penalty_rep])
@@ -123,10 +122,10 @@ def run_ms(
             yhat_t = torch.squeeze(pi_a_t)[:-1]
             loss_sup += F.mse_loss(yhat_t, Y_i[t])
 
-            if not supervised:
-                # update WM/EM bsaed on the condition
-                hc_t = cond_manipulation(
-                    cond_i, t, event_ends[0], hc_t, agent)
+            # if not supervised:
+            # update WM/EM bsaed on the condition
+            hc_t = cond_manipulation(
+                cond_i, t, event_ends[0], hc_t, agent)
 
             # cache results for later analysis
             if get_cache:
