@@ -108,9 +108,9 @@ def run_ms(
             # get reward
             r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
-            print("r_t:", r_t)
-            print("a_t:", a_t)
-            print("p_a_t:", p_a_t)
+            tf.print("r_t:", r_t)
+            tf.print("a_t:", a_t)
+            tf.print("p_a_t:", p_a_t)
 
             # if don't know, break
             if Y_i[t].shape[0] == a_t:
