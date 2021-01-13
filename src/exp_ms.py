@@ -108,7 +108,7 @@ def run_ms(
             r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
             # if don't know, break
-            if y_t.shape[0] == a_t:
+            if Y_i[t].shape[0] == a_t:
                 break
             # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
             X_i_t = io_convert(a_t, t, Y_i.shape[0], Y_i.shape[1])
