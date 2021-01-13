@@ -75,7 +75,7 @@ def get_reward_ms(a_t, y_t, penalty, allow_dk=True):
         # -1 is not in the range of a_t, so r_t = penalty unless a_t == dk
         a_t_targ = torch.tensor(-1)
     else:
-        a_t_targ = torch.argmax(y_t)
+        a_t_targ = torch.argmax(torch.from_numpy(y_t))
     # compare action vs. target action
     if a_t == dk_id and allow_dk:
         r_t =  - penalty
