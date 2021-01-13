@@ -191,7 +191,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [results, metrics, XY] = run_ms(
         agent, optimizer,
         task, p, n_examples, tpath,
-        fix_penalty=penalty, slience_recall_time=slience_recall_time,
+        fix_penalty=penalty,
         learning=False, get_data=True,
     )
 
@@ -314,7 +314,7 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
     fix_penalty=penalty, slience_recall_time=slience_recall_time,
     learning=False, get_data=True,
     )
-    
+
     # save the data
     test_params = [fix_penalty, pad_len_test, slience_recall_time]
     test_data_dir, _ = get_test_data_dir(
