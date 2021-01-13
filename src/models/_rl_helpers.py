@@ -69,7 +69,7 @@ def get_reward_ms(a_t, y_t, penalty, allow_dk=True):
         immediate reward at time t
 
     """
-    dk_id = y_t.size()#[0]
+    dk_id = y_t.shape[0]
     # if y_t is all zeros (delay period), then action target DNE
     if torch.all(y_t == 0):
         # -1 is not in the range of a_t, so r_t = penalty unless a_t == dk
