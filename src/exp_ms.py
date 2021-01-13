@@ -58,6 +58,7 @@ def run_ms(
 
         # get time info
         T_total = X_i.shape[0]
+        print("T_total:", T_total)
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
@@ -106,6 +107,10 @@ def run_ms(
             a_t, p_a_t = agent.pick_action(pi_a_t)
             # get reward
             r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
+
+            print("r_t:", r_t)
+            print("a_t:", a_t)
+            print("p_a_t:", p_a_t)
 
             # if don't know, break
             if Y_i[t].shape[0] == a_t:
