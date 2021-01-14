@@ -109,8 +109,8 @@ def run_ms(
             r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
             torch.set_printoptions(profile="full")
-            print("r_t:", r_t)
-            print("a_t:", a_t)
+            print("r_t:", r_t, r_t.shape)
+            print("a_t:", a_t, a_t.shape)
             print("p_a_t:", p_a_t)
 
             # if don't know, break
