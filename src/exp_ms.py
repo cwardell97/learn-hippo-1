@@ -113,9 +113,7 @@ def run_ms(
             print("a_t:", a_t, a_t.shape)
             print("p_a_t:", p_a_t)
 
-            # if don't know, break
-            if Y_i[t].shape[0] == a_t:
-                break
+
             # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
             X_i_t = io_convert(a_t, t, Y_i.shape[0], Y_i.shape[1])
 
@@ -140,7 +138,9 @@ def run_ms(
             if t % T_part >= pad_len:
                 log_dist_a[i].append(to_sqnp(pi_a_t))
                 log_targ_a[i].append(to_sqnp(Y_i[t]))
-
+            # if don't know, break
+            if Y_i[t].shape[0] == a_t:
+                break
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         print("rewards:", rewards)
