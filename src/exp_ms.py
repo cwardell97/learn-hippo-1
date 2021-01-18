@@ -126,7 +126,7 @@ def run_ms(
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
             print("yhat_t: ", yhat_t)
-            print(("yhat_t shape: ", yhat_t.shape)
+            print("yhat_t shape: ", yhat_t.shape)
             loss_sup += F.mse_loss(yhat_t, Y_i[t])
 
             # if not supervised:
