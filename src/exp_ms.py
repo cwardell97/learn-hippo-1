@@ -141,6 +141,7 @@ def run_ms(
             # if don't know, break
             if Y_i[t].shape[0] == a_t:
                 break
+
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         print("rewards:", rewards)
@@ -297,7 +298,9 @@ def io_convert(a_t, t, T, A):
     '''
     time_oh_vec = np.identity(T)[t]
     time_q_vec = np.identity(T)[t]
-    obs_val_oh_vec = np.identity(A)[a_t]
-
-
+    # special case if dk
+    if a_t == A:
+        obs_val_oh_vec =  np.zeros(A)
+    else:
+        obs_val_oh_vec = np.identity(A)[a_t]
     return np.concatenate([time_oh_vec,obs_val_oh_vec, time_oh_vec])
