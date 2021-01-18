@@ -111,7 +111,8 @@ def run_ms(
             torch.set_printoptions(profile="full")
             print("r_t:", r_t, r_t.shape)
             print("a_t:", a_t, a_t.shape)
-            print("p_a_t:", p_a_t)
+            print("pi_a_t shape:", pi_a_t.shape)
+            print("Y_i shape:", Y_i.shape)
 
 
             # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
@@ -124,6 +125,8 @@ def run_ms(
             ents.append(entropy(pi_a_t))
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
+            print("yhat_t: ", yhat_t)
+            print(("yhat_t shape: ", yhat_t.shape)
             loss_sup += F.mse_loss(yhat_t, Y_i[t])
 
             # if not supervised:
