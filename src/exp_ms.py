@@ -28,9 +28,9 @@ def run_ms(
 
     '''# sample data (not needed)
     X, Y = task.sample(n_examples, to_torch=True)
+    '''
     # logger
     log_return, log_pi_ent = 0, 0
-    '''
     log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
     log_cond = np.zeros(n_examples,)
     log_dist_a = [[] for _ in range(n_examples)]
