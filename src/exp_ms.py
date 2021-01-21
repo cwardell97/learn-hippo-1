@@ -187,10 +187,10 @@ def run_ms(
 
 def append_prev_info(x_it_, scalar_list):
     for s in scalar_list:
-        print(s.type())
-        print(x_it_.type())
+        print("stype: ", s.type())
+        print("x_it_ type: ", x_it_.type())
         x_it_ = torch.cat(
-            [x_it_, s.type(torch.FloatTensor).view(tensor_length(s))]
+            [x_it_, s.type(torch.DoubleTensor).view(tensor_length(s))]
         )
     return x_it_
 
