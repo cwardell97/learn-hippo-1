@@ -189,11 +189,12 @@ def append_prev_info(x_it_, scalar_list):
     x_it_.type(torch.FloatTensor)
     for s in scalar_list:
         s.type(torch.FloatTensor)
-        print("stype: ", s.type())
-        print("x_it_ type: ", x_it_.type())
+        #print("stype: ", s.type())
+        #print("x_it_ type: ", x_it_.type())
         x_it_ = torch.cat(
             [x_it_, s.view(tensor_length(s))]
         )
+        x_it_.type(torch.FloatTensor)
     return x_it_
 
 
