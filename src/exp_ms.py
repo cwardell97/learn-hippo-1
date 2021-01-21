@@ -35,7 +35,7 @@ def run_ms(
     log_cond = np.zeros(n_examples,)
     log_dist_a = [[] for _ in range(n_examples)]
     log_targ_a = [[] for _ in range(n_examples)]
-    log_cache = [None] * n_examples    
+    log_cache = [None] * n_examples
 
     for i in range(n_examples):
         # pick a condition
@@ -140,7 +140,7 @@ def run_ms(
             # for behavioral stuff, only record prediction time steps
             if t % T_part >= pad_len:
                 log_dist_a[i].append(to_sqnp(pi_a_t))
-                log_targ_a[i].append(to_sqnp(Y_i[t]))
+                log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t]))
             # if don't know, break
             if Y_i[t].shape[0] == a_t:
                 break
