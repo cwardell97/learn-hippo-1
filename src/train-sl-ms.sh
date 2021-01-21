@@ -7,7 +7,7 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=end
 #SBATCH --mail-user=cwardell@princeton.edu
-#SBATCH --output /home/cwardell/slurm_log/lhms-%j.log
+#SBATCH --output /home/cwardell/GitHub/learn-hippo-1/slurm_log/lhms-%j.log
 
 #module load anaconda
 
