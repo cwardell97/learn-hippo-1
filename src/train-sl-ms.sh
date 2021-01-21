@@ -7,7 +7,7 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=end
 #SBATCH --mail-user=cwardell@princeton.edu
-#SBATCH --output /scratch/gpfs/cwardell/slurm_log/lcarnn-%j.log
+#SBATCH --output /home/cwardell/slurm_log/lhms-%j.log
 
 #module load anaconda
 
