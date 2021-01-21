@@ -109,11 +109,13 @@ def run_ms(
             r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
             torch.set_printoptions(profile="full")
+
+            ''' debugging prints
             print("r_t:", r_t, r_t.shape)
             print("a_t:", a_t, a_t.shape)
             print("pi_a_t shape:", pi_a_t.shape)
             print("Y_i shape:", Y_i.shape)
-
+            '''
 
             # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
             X_i_t = io_convert(a_t, t, Y_i.shape[0], Y_i.shape[1])
@@ -125,8 +127,6 @@ def run_ms(
             ents.append(entropy(pi_a_t))
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
-            print("yhat_t: ", yhat_t)
-            print("yhat_t shape: ", yhat_t.shape)
             loss_sup += F.mse_loss(yhat_t, torch.from_numpy(Y_i[t]))
 
             # if not supervised:
@@ -187,6 +187,8 @@ def run_ms(
 
 def append_prev_info(x_it_, scalar_list):
     for s in scalar_list:
+        print(s.type())
+        print(x_it_.type())
         x_it_ = torch.cat(
             [x_it_, s.type(torch.FloatTensor).view(tensor_length(s))]
         )
