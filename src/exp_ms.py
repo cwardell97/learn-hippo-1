@@ -186,7 +186,7 @@ def run_ms(
 
 
 def append_prev_info(x_it_, scalar_list):
-    x_it_.double()
+    x_it_.type(torch.DoubleTensor)
     for s in scalar_list:
         s.double()
         print("stype: ", s.type())
