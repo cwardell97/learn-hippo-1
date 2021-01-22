@@ -36,7 +36,8 @@ def run_ms(
     log_dist_a = [[] for _ in range(n_examples)]
     log_targ_a = [[] for _ in range(n_examples)]
     log_cache = [None] * n_examples
-
+    log_X = []
+    log_sim_lengths = []
     for i in range(n_examples):
         # pick a condition
         cond_i = 'DM'
@@ -86,7 +87,7 @@ def run_ms(
         for t in range(T_total):
             t_relative = t % T_part
             in_2nd_part = t >= T_part
-
+            print(i,t)
             if not in_2nd_part:
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
             else:
@@ -119,7 +120,7 @@ def run_ms(
             '''
 
             # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
-            X_i_t = io_convert(a_t, t, Y_i.shape[0], Y_i.shape[1])
+            X_i_t = io_convert(a_t, t, p.env.n_param, Y_i.shape[1])
 
             # cache the results for later RL loss computation
             rewards.append(r_t)
@@ -142,15 +143,32 @@ def run_ms(
             if t % T_part >= pad_len:
                 log_dist_a[i].append(to_sqnp(pi_a_t))
                 log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t])))
+
+            # create array to store X vals throughout trial
+            if t == 0:
+                log_xit = np.empty(np.atleast_2d(X_i_t).shape)
+
+            log_xit = np.vstack([log_xit, X_i_t])
+
             # if don't know, break
             if Y_i[t].shape[0] == a_t:
+                # log X
+                log_X.append(log_xit)
+                log_sim_lengths.append(log_xit.shape[1])
+                for j in range(t,T_total):
+                    log_dist_a[i].append(0)
+                    log_targ_a[i].append(0)
                 break
+            # if last timestep t, log X
+            if t%T_total == 0 or t%T_total == pad_len:
+                log_X.append(log_xit)
+                log_sim_lengths.append(log_xit.shape[1])
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
-        print("rewards:", rewards)
-        print("values:", values)
-        print("probs:", probs)
+        #print("rewards:", rewards)
+        #print("values:", values)
+        #print("probs:", probs)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
@@ -178,18 +196,19 @@ def run_ms(
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
                log_return, log_pi_ent]
     out = [results, metrics]
+    print("log_dist_a shape: ", np.shape(log_dist_a))
     if get_data:
-        X_array_list = [to_sqnp(X[i]) for i in range(n_examples)]
-        Y_array_list = [to_sqnp(Y[i]) for i in range(n_examples)]
-        training_data = [X_array_list, Y_array_list]
-        out.append(training_data)
+        X_array_list = log_X
+        sim_lenths = log_sim_lengths
+        sims_data = [X_array_list, sim_lenths]
+        out.append(sims_data)
     return out
 
 
 def append_prev_info(x_it_, scalar_list):
-    x_it_.type(torch.FloatTensor)
+    x_it_ = x_it_.type(torch.FloatTensor)
     for s in scalar_list:
-        s.type(torch.FloatTensor)
+        s = s.type(torch.FloatTensor)
         #print("stype: ", s.type())
         #print("x_it_ type: ", x_it_.type())
         x_it_ = torch.cat(
@@ -305,8 +324,8 @@ def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
 def io_convert(a_t, t, T, A):
     '''converts model output to one-hot vector input format
     '''
-    time_oh_vec = np.identity(T)[t]
-    time_q_vec = np.identity(T)[t]
+    time_oh_vec = np.identity(T)[t%T]
+    time_q_vec = np.identity(T)[t%T]
     # special case if dk
     if a_t == A:
         obs_val_oh_vec =  np.zeros(A)
