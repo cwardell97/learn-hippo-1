@@ -5,6 +5,7 @@ import pdb
 from models.EM import EM
 from torch.distributions import Categorical
 from models.initializer import initialize_weights
+import numpy as np
 
 # constants
 # number of vector signal (lstm gates)
@@ -91,6 +92,10 @@ class LCALSTM(nn.Module):
         c_prev = c_prev.view(c_prev.size(1), -1) # cell state from t-1
         x_t = x_t.view(x_t.size(1), -1)
         # transform the input info
+        #print("h_prev:", np.shape(h_prev))
+        #print("x_t:", np.shape(x_t))
+        #print("i2h:", np.shape(i2h))
+        #print("h2h:", np.shape(h2h))
         preact = self.i2h(x_t) + self.h2h(h_prev) #preactivation because it hasnt been transform by nonlin
         # get all gate values
         gates = preact[:, : N_VSIG * self.rnn_hidden_dim].sigmoid()
