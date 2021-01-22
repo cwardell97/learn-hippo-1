@@ -17,7 +17,7 @@ from utils.io import pickle_load_dict
 def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
-        learning=True, get_cache=True, get_data=False
+        learning=True, get_cache=True, get_data=True
 ):
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
