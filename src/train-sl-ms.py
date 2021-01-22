@@ -145,10 +145,16 @@ if enc_size != enc_size:
         os.makedirs(test_data_dir)
 fpath = os.path.join(test_data_dir, test_data_fname)
 '''
-# hardcode pretrained model filepath
+
+# hardcode pretrained model filepath (local)
+tpath = '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
+train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
+
+
+'''# hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
-
+'''
 
 # load model
 agent, optimizer = load_ckpt(
@@ -188,7 +194,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
-    [results, metrics, XY] = run_ms(
+    [results, metrics, sims_data] = run_ms(
         agent, optimizer,
         task, p, n_examples, tpath,
         fix_penalty=penalty,
@@ -199,7 +205,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
      Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
-    # compute stats
+    '''# compute stats
     bm_ = compute_behav_metrics(targ_a, dist_a, task)
     Log_acc[epoch_id], Log_mis[epoch_id], Log_dk[epoch_id] = bm_
     acc_mu_pts_str = " ".join('%.2f' % i for i in Log_acc[epoch_id])
@@ -214,10 +220,13 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
         Log_loss_sup[epoch_id], runtime)
     print(msg)
-
+    '''
+    '''
     # update lr scheduler
     neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
     scheduler_rl.step(neg_pol_score)
+    '''
+
 
     # save weights
     if np.mod(epoch_id + 1, log_freq) == 0:
@@ -266,7 +275,7 @@ fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 f.suptitle('learning curves', fontsize=15)
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-'''plot performance'''
+'''plot performance --> just plot don't knows
 # prep data
 cond_ids = {}
 for cond_name_ in list(TZ_COND_DICT.values()):
@@ -286,7 +295,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     )
     fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
+'''
 
 '''eval the model'''
 pad_len_test = 0
@@ -308,7 +317,7 @@ task = SequenceLearning(
 )
 
 for fix_penalty in np.arange(0, penalty + 1, 2):
-    [results, metrics, XY] = run_ms(
+    [results, metrics, sims_data] = run_ms(
     agent, optimizer,
     task, p, n_examples_test, tpath,
     fix_penalty=penalty, slience_recall_time=slience_recall_time,
@@ -321,7 +330,7 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
         log_subpath, epoch_load, test_params)
     test_data_fname = get_test_data_fname(
         n_examples_test, fix_cond, scramble)
-    test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY,
-    'training_data': training_data}
+    test_data_dict = {'results': results, 'metrics': metrics,
+    'sims_data': sims_data}
     fpath = os.path.join(test_data_dir, test_data_fname)
     pickle_save_dict(test_data_dict, fpath)
