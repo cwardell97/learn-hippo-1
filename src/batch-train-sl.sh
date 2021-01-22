@@ -10,8 +10,8 @@ n_def_tps=0
 similarity_max=.4
 similarity_min=0.0
 
-p_rm_ob_enc=0.3
-p_rm_ob_rcl=0.3
+p_rm_ob_enc=0.0   # effects noisey of observation (.3 it doesnt see all params)
+p_rm_ob_rcl=0.0    # effects noisey of observation
 pad_len=-1
 
 eta=.1
