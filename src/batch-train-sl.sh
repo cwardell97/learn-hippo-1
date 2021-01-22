@@ -1,7 +1,7 @@
 #!/bin/bash
 
 exp_name='vary-test-penalty'
-n_epoch=5000
+n_epoch=500
 n_branch=4
 
 def_prob=.25
