@@ -154,7 +154,7 @@ def run_ms(
             if Y_i[t].shape[0] == a_t:
                 # log X
                 log_X.append(log_xit)
-                log_sim_lengths.append(log_xit.shape[1])
+                log_sim_lengths.append(t)
                 for j in range(t,T_total):
                     log_dist_a[i].append(0)
                     log_targ_a[i].append(0)
@@ -162,7 +162,7 @@ def run_ms(
             # if last timestep t, log X
             if t%T_total == 0 or t%T_total == pad_len:
                 log_X.append(log_xit)
-                log_sim_lengths.append(log_xit.shape[1])
+                log_sim_lengths.append(t)
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
