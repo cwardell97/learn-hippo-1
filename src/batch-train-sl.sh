@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='vary-test-penalty'
+exp_name='Mental-Sims'
 n_epoch=1000
 n_branch=4
 
