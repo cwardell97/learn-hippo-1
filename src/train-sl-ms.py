@@ -146,7 +146,8 @@ if enc_size != enc_size:
 fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
-'''# hardcode pretrained model filepath (local)
+'''
+# hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
 '''
@@ -211,8 +212,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
-     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
-        sims_lengths[epoch_id] = sims_data
+    Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
+    sims_lengths[epoch_id] = sims_data
 
     '''# compute stats
     bm_ = compute_behav_metrics(targ_a, dist_a, task)
@@ -244,11 +245,11 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
 
 '''plot learning curves'''
-f, axes = plt.subplots(1, 1, figsize=(10, 9)) #, sharex=True)
-axes[0, 0].plot(sims_lengths)
-axes[0, 0].set_ylabel('sim length')
-axes[0, 0].axhline(0, color='grey', linestyle='--')
-axes[0, 0].set_xlabel('epoch')
+f, axes = plt.subplots(figsize=(10, 9)) #, sharex=True)
+axes.plot(sims_lengths)
+axes.set_ylabel('sim length')
+axes.axhline(0, color='grey', linestyle='--')
+axes.set_xlabel('epoch')
 #axes[0, 0].set_title(Log_return[-1])
 '''
 axes[0, 1].plot(Log_pi_ent)
