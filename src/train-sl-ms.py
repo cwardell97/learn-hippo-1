@@ -234,8 +234,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     #update lr scheduler
     #neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
-    neg_pol_score = sims_lengths[epoch_id]
-    scheduler_rl.step(neg_pol_score)
+    #neg_pol_score = sims_lengths[epoch_id]
+    #scheduler_rl.step(neg_pol_score)
 
 
 

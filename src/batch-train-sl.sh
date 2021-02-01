@@ -1,7 +1,7 @@
 #!/bin/bash
 
 exp_name='Mental-Sims'
-n_epoch=1000
+n_epoch=3000
 n_branch=4
 
 def_prob=.25
@@ -15,7 +15,7 @@ p_rm_ob_rcl=0.0    # effects noisey of observation
 pad_len=-1
 
 eta=.1
-lr=7e-4
+lr=8e-4
 sup_epoch=600
 
 penalty_random=0
