@@ -160,6 +160,12 @@ train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-
 agent, optimizer = load_ckpt(
     epoch_load, train_logsubpath['ckpts'], agent)
 
+# init scheduler
+scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
+    verbose=True)
+
+
 # if data dir does not exsits ... skip
 if agent is None:
     print('Agent DNE')
@@ -186,6 +192,7 @@ Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
+sims_lengths = np.zeros(n_epoch,)
 
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
@@ -205,6 +212,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
      Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
+        sims_lengths[epoch_id] = sims_data
+
     '''# compute stats
     bm_ = compute_behav_metrics(targ_a, dist_a, task)
     Log_acc[epoch_id], Log_mis[epoch_id], Log_dk[epoch_id] = bm_
@@ -221,11 +230,12 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         Log_loss_sup[epoch_id], runtime)
     print(msg)
     '''
-    '''
-    # update lr scheduler
-    neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
+
+    #update lr scheduler
+    #neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
+    neg_pol_score = sims_lengths[epoch_id]
     scheduler_rl.step(neg_pol_score)
-    '''
+
 
 
     # save weights
@@ -234,12 +244,13 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
 
 '''plot learning curves'''
-f, axes = plt.subplots(3, 2, figsize=(10, 9), sharex=True)
-axes[0, 0].plot(Log_return)
-axes[0, 0].set_ylabel('return')
+f, axes = plt.subplots(1, 1, figsize=(10, 9)) #, sharex=True)
+axes[0, 0].plot(sims_lengths)
+axes[0, 0].set_ylabel('sim length')
 axes[0, 0].axhline(0, color='grey', linestyle='--')
-axes[0, 0].set_title(Log_return[-1])
-
+axes[0, 0].set_xlabel('epoch')
+#axes[0, 0].set_title(Log_return[-1])
+'''
 axes[0, 1].plot(Log_pi_ent)
 axes[0, 1].set_ylabel('entropy')
 
@@ -270,6 +281,7 @@ for i, ax in enumerate(f.axes):
 axes[-1, 0].set_xlabel('Epoch')
 axes[-1, 1].set_xlabel('Epoch')
 sns.despine()
+'''
 f.tight_layout()
 fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 f.suptitle('learning curves', fontsize=15)
