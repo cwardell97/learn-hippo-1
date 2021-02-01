@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-dif-scheduler'
+exp_name='Mental-Sims-zero-scheduler'
 n_epoch=2000
 n_branch=4
 
