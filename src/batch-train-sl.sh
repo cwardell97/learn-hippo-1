@@ -1,7 +1,7 @@
 #!/bin/bash
 
-exp_name='Mental-Sims (dif scheduler)'
-n_epoch=3000
+exp_name='Mental-Sims-dif scheduler'
+n_epoch=2000
 n_branch=4
 
 def_prob=.25
