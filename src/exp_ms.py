@@ -37,7 +37,7 @@ def run_ms(
     log_targ_a = [[] for _ in range(n_examples)]
     log_cache = [None] * n_examples
     log_X = []
-    log_sim_lengths = []
+    log_sim_lengths = [[] for _ in range(n_examples)]
     for i in range(n_examples):
         # pick a condition
         cond_i = 'DM'
@@ -85,6 +85,9 @@ def run_ms(
         agent.encoding_off()
 
         for t in range(T_total):
+            if t == 0:
+                log_sim_lengths[i] = pad_len
+
             t_relative = t % T_part
             in_2nd_part = t >= T_part
             print(i,t)
@@ -153,16 +156,15 @@ def run_ms(
             # if don't know, break
             if Y_i[t].shape[0] == a_t:
                 # log X
-                log_X.append(log_xit)
-                log_sim_lengths.append(t)
+                #log_X.append(log_xit)
+                log_sim_lengths[i] = t
                 for j in range(t,T_total):
                     log_dist_a[i].append(0)
                     log_targ_a[i].append(0)
                 break
             # if last timestep t, log X
-            if t%T_total == 0 or t%T_total == pad_len:
-                log_X.append(log_xit)
-                log_sim_lengths.append(t)
+            #if t%T_total == 0 or t%T_total == pad_len:
+            #    log_X.append(log_xit)
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
@@ -198,9 +200,9 @@ def run_ms(
     out = [results, metrics]
     print("log_dist_a shape: ", np.shape(log_dist_a))
     if get_data:
-        X_array_list = log_X
-        sim_lenths = log_sim_lengths
-        sims_data = [X_array_list, sim_lenths]
+        #X_array_list = log_X
+        #sim_lenths = log_sim_lengths
+        sims_data = average(log_sim_lengths)
         out.append(sims_data)
     return out
 
