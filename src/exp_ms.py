@@ -17,18 +17,14 @@ from utils.io import pickle_load_dict
 def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
-        learning=True, get_cache=True, get_data=True
+        learning=True, get_cache=True, get_data=True,
+        counter_face=False
 ):
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
     X_train = np.array(training_data[0])
     Y_train = np.array(training_data[1])
 
-
-
-    '''# sample data (not needed)
-    X, Y = task.sample(n_examples, to_torch=True)
-    '''
     # logger
     log_return, log_pi_ent = 0, 0
     log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
@@ -38,6 +34,7 @@ def run_ms(
     log_cache = [None] * n_examples
     log_X = []
     log_sim_lengths = [[] for _ in range(n_examples)]
+
     for i in range(n_examples):
         # pick a condition
         cond_i = 'DM'
@@ -49,13 +46,10 @@ def run_ms(
         X_i = X_train[i,:,:]
         Y_i = Y_train[i,:,:]
 
+        '''MOVE THIS to MS section'''
         # set first input randomly from X_i
         j = rd.randint(0,(X_i.shape[0]-1))
         X_i_t = X_i[j,:]
-
-        ''' (not needed)
-        if scramble:
-            X_i, Y_i = time_scramble(X_i, Y_i, task)'''
 
         # get time info
         T_total = X_i.shape[0]
@@ -84,6 +78,57 @@ def run_ms(
         agent.retrieval_off()
         agent.encoding_off()
 
+        ''' Load em with two events: no prediction no penality'''
+        for t in range(T_total):
+            t_relative = t % T_part
+            in_2nd_part = t >= T_part
+
+            if not in_2nd_part:
+                penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
+            else:
+                penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
+
+            # testing condition
+            if slience_recall_time is not None:
+                slience_recall(t_relative, in_2nd_part,
+                               slience_recall_time, agent)
+            # whether to encode
+
+            set_encoding_flag(t, enc_times, cond_i, agent)
+
+            # forward
+            x_it = append_prev_info(X_i[t], [penalty_rep])
+            pi_a_t, v_t, hc_t, cache_t = agent.forward(
+                x_it.view(1, 1, -1), hc_t)
+            # after delay period, compute loss
+            a_t, p_a_t = agent.pick_action(pi_a_t)
+            # get reward REMOVE
+            #r_t = get_reward(a_t, Y_i[t], penalty_val)
+
+            # cache the results for later RL loss computation REMOVE
+            #rewards.append(r_t)
+            #values.append(v_t)
+            #probs.append(p_a_t)
+            #ents.append(entropy(pi_a_t))
+            # compute supervised loss (REMOVE)
+            #yhat_t = torch.squeeze(pi_a_t)[:-1]
+            #loss_sup += F.mse_loss(yhat_t, Y_i[t])
+
+
+                 update WM/EM bsaed on the condition
+            hc_t = cond_manipulation(
+                cond_i, t, event_ends[0], hc_t, agent)
+
+            # cache results for later analysis REMOVE
+            #if get_cache:
+            #    log_cache_i[t] = cache_t
+            # for behavioral stuff, only record prediction time steps
+            #if t % T_part >= pad_len:
+            #    log_dist_a[i].append(to_sqnp(pi_a_t))
+            #    log_targ_a[i].append(to_sqnp(Y_i[t]))
+
+
+        ''' Now predict '''
         for t in range(T_total):
             if t == 0:
                 log_sim_lengths[i] = pad_len
@@ -115,12 +160,6 @@ def run_ms(
 
             torch.set_printoptions(profile="full")
 
-            ''' debugging prints
-            print("r_t:", r_t, r_t.shape)
-            print("a_t:", a_t, a_t.shape)
-            print("pi_a_t shape:", pi_a_t.shape)
-            print("Y_i shape:", Y_i.shape)
-            '''
 
             # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
             X_i_t = io_convert(a_t, t, p.env.n_param, Y_i.shape[1])
@@ -165,6 +204,10 @@ def run_ms(
             # if last timestep t, log X
             #if t%T_total == 0 or t%T_total == pad_len:
             #    log_X.append(log_xit)
+
+
+
+
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
