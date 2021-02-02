@@ -18,7 +18,7 @@ def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
         learning=True, get_cache=True, get_data=True,
-        counter_face=False
+        counter_fact=False
 ):
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
@@ -45,11 +45,6 @@ def run_ms(
         #j = rd.randint(0,(n_examples_test-1))
         X_i = X_train[i,:,:]
         Y_i = Y_train[i,:,:]
-
-        '''MOVE THIS to MS section'''
-        # set first input randomly from X_i
-        j = rd.randint(0,(X_i.shape[0]-1))
-        X_i_t = X_i[j,:]
 
         # get time info
         T_total = X_i.shape[0]
@@ -127,9 +122,20 @@ def run_ms(
             #    log_dist_a[i].append(to_sqnp(pi_a_t))
             #    log_targ_a[i].append(to_sqnp(Y_i[t]))
 
+        '''seed simulation CHANGE TO SAMPLE W/out replacement'''
+        if not counter_fact:
+            j = rd.randint(0,pad_len-1)
+            k = rd.randint(0,pad_len-1)
+            X_i_t0 = X_i[j,:]
+            X_i_t1 = X_i[k,:]
+        else:
+            j = rd.randint(pad_len,(X_i.shape[0]-1))
+            k = rd.randint(0, pad_len-1)
+            X_i_t0 = X_i[j,:]
+            X_i_t1 = X_i[k,:]
 
         ''' Now predict '''
-        for t in range(T_total):
+        for t in range(pad_len):
             if t == 0:
                 log_sim_lengths[i] = pad_len
 
