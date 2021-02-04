@@ -152,13 +152,15 @@ k: dictates number of seed feature value pairs
                 seed_dictX["seed_X{0}".format(k)] = X_j[pair_nums[k]]
                 seed_dictY["seed_Y{0}".format(k)] = Y_j[pair_nums[k]]
 
+        # count_fact --> sample one seed from each event 
         else:
-            j = rd.randint(pad_len,(X_i.shape[0]-1))
-            k = rd.randint(0, pad_len-1)
-            X_i_t0 = X_i[j,:]
-            X_i_t1 = X_i[k,:]
+            for k in range(k):
+                # get random # from 0,pad_len
+                ran = np.random.choice(pad_len,1)
+                seed_dictX["seed_X{0}".format(k)] = X_dict["X_{0}".format(k)][ran]
+                seed_dictY["seed_Y{0}".format(k)] = Y_dict["Y_{0}".format(k)][ran]
 
-        ''' Now predict '''
+        '''now predict'''
         for t in range(pad_len):
             if t == 0:
                 log_sim_lengths[i] = pad_len
