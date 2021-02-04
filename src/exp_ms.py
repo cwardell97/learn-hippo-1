@@ -18,8 +18,13 @@ def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
         learning=True, get_cache=True, get_data=True,
-        counter_fact=False
+        counter_fact=False, k=2
 ):
+'''
+counter_fact: modulates sampling for counter factual premises
+k: dictates number of seed feature value pairs
+
+'''
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
     X_train = np.array(training_data[0])
@@ -35,6 +40,7 @@ def run_ms(
     log_X = []
     log_sim_lengths = [[] for _ in range(n_examples)]
 
+    # note that first and second half of x is redudant, only need to show half
     for i in range(n_examples):
         # pick a condition
         cond_i = 'DM'
@@ -43,8 +49,16 @@ def run_ms(
         #X_i, Y_i = X[i], Y[i]
         # load a single example (maybe just go through iteratively)
         #j = rd.randint(0,(n_examples_test-1))
-        X_i = X_train[i,:,:]
-        Y_i = Y_train[i,:,:]
+
+        # sample k X & Ys randomly without replacement
+        data_sample_ind=np.random.choice(n_examples,k,replace=False)
+        X_dict = {}
+        Y_dict = {}
+        l = 0
+        for k in data_sample_ind:
+            X_dict["X_{0}".format(l)] = X_train[k,:,:]
+            Y_dict["Y_{0}".format(l)] = Y_train[k,:,:]
+            l+=1
 
         # get time info
         T_total = X_i.shape[0]
@@ -67,67 +81,77 @@ def run_ms(
 
         # init model wm and em
         penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
-        penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
+        #penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty) REMOVE
 
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
 
-        ''' Load em with two events: no prediction no penality'''
-        for t in range(T_total):
-            t_relative = t % T_part
-            in_2nd_part = t >= T_part
+        ''' Load em with k events'''
+        for k in range(k):
+            # load X,Y for specific events
+            X_k = X_dict["X_{0}".format(k)]
+            Y_k = Y_dict["Y_{0}".format(k)]
+            for t in range(pad_len):
+                t_relative = t % T_part
+                #in_2nd_part = t >= T_part REMOVE
 
-            if not in_2nd_part:
+                #if not in_2nd_part: REMOVE
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
-            else:
-                penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
 
-            # testing condition
-            if slience_recall_time is not None:
-                slience_recall(t_relative, in_2nd_part,
-                               slience_recall_time, agent)
-            # whether to encode
+                #else: REMOVE
+                #    penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
 
-            set_encoding_flag(t, enc_times, cond_i, agent)
+                # testing condition
+                if slience_recall_time is not None:
+                    slience_recall(t_relative, in_2nd_part,
+                                   slience_recall_time, agent)
+                # whether to encode
 
-            # forward
-            x_it = append_prev_info(X_i[t], [penalty_rep])
-            pi_a_t, v_t, hc_t, cache_t = agent.forward(
-                x_it.view(1, 1, -1), hc_t)
-            # after delay period, compute loss
-            a_t, p_a_t = agent.pick_action(pi_a_t)
-            # get reward REMOVE
-            #r_t = get_reward(a_t, Y_i[t], penalty_val)
+                set_encoding_flag(t, enc_times, cond_i, agent)
 
-            # cache the results for later RL loss computation REMOVE
-            #rewards.append(r_t)
-            #values.append(v_t)
-            #probs.append(p_a_t)
-            #ents.append(entropy(pi_a_t))
-            # compute supervised loss (REMOVE)
-            #yhat_t = torch.squeeze(pi_a_t)[:-1]
-            #loss_sup += F.mse_loss(yhat_t, Y_i[t])
+                # forward
+                x_it = append_prev_info(X_k[t], [penalty_rep])
+                pi_a_t, v_t, hc_t, cache_t = agent.forward(
+                    x_it.view(1, 1, -1), hc_t)
+                # after delay period, compute loss
+                a_t, p_a_t = agent.pick_action(pi_a_t)
+                # get reward
+                r_t = get_reward(a_t, Y_k[t], penalty_val)
+                # cache the results for later RL loss computation REMOVE
+                rewards.append(r_t)
+                values.append(v_t)
+                probs.append(p_a_t)
+                ents.append(entropy(pi_a_t))
 
 
-                 update WM/EM bsaed on the condition
-            hc_t = cond_manipulation(
-                cond_i, t, event_ends[0], hc_t, agent)
+                #update WM/EM bsaed on the condition (flushing WM / retrieve during part 2)
+                hc_t = cond_manipulation(
+                    cond_i, t, event_ends[0], hc_t, agent)
 
-            # cache results for later analysis REMOVE
-            #if get_cache:
-            #    log_cache_i[t] = cache_t
-            # for behavioral stuff, only record prediction time steps
-            #if t % T_part >= pad_len:
-            #    log_dist_a[i].append(to_sqnp(pi_a_t))
-            #    log_targ_a[i].append(to_sqnp(Y_i[t]))
+                # cache results for later analysis REMOVE
+                if get_cache:
+                    log_cache_i[t] = cache_t
+                # for behavioral stuff, only record prediction time steps
+                if t % T_part >= pad_len:
+                    log_dist_a[i].append(to_sqnp(pi_a_t))
+                    log_targ_a[i].append(to_sqnp(Y_i[t]))
 
-        '''seed simulation CHANGE TO SAMPLE W/out replacement'''
+        '''sample simulation seeds'''
         if not counter_fact:
-            j = rd.randint(0,pad_len-1)
-            k = rd.randint(0,pad_len-1)
-            X_i_t0 = X_i[j,:]
-            X_i_t1 = X_i[k,:]
+            # rand X,Y from X_dict/Y_dict for seeds
+            j = rd.randint(0,k)
+            X_j = X_dict["X_{0}".format(j)]
+            Y_j = Y_dict["Y_{0}".format(j)]
+            # select k f/v pairs from within X
+            pair_nums = np.random.choice(pad_len,k,replace=False)
+            seed_dict = {}
+
+            for k in range(k):
+                # load X,Y for specific events
+                seed_dictX["seed_X{0}".format(k)] = X_j[pair_nums[k]]
+                seed_dictY["seed_Y{0}".format(k)] = Y_j[pair_nums[k]]
+
         else:
             j = rd.randint(pad_len,(X_i.shape[0]-1))
             k = rd.randint(0, pad_len-1)
@@ -138,10 +162,14 @@ def run_ms(
         for t in range(pad_len):
             if t == 0:
                 log_sim_lengths[i] = pad_len
+                X_i_t = X_i_t0
+            if t == 1:
+                X_i_t = X_i_t1
 
-            t_relative = t % T_part
-            in_2nd_part = t >= T_part
-            print(i,t)
+            ''' Don't understand 6lns below'''
+            #t_relative = t % T_part
+            #in_2nd_part = t >= T_part
+            #print(i,t)
             if not in_2nd_part:
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
             else:
@@ -175,9 +203,9 @@ def run_ms(
             values.append(v_t)
             probs.append(p_a_t)
             ents.append(entropy(pi_a_t))
-            # compute supervised loss
-            yhat_t = torch.squeeze(pi_a_t)[:-1]
-            loss_sup += F.mse_loss(yhat_t, torch.from_numpy(Y_i[t]))
+            # compute supervised loss (Don't understand, I can remove, right?)
+            #yhat_t = torch.squeeze(pi_a_t)[:-1]
+            #loss_sup += F.mse_loss(yhat_t, torch.from_numpy(Y_i[t]))
 
             # if not supervised:
             # update WM/EM bsaed on the condition
@@ -193,13 +221,12 @@ def run_ms(
                 log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t])))
 
             # create array to store X vals throughout trial
-            if t == 0:
-                log_xit = np.empty(np.atleast_2d(X_i_t).shape)
+            #if t == 0:
+            #    log_xit = np.empty(np.atleast_2d(X_i_t).shape)
+            #log_xit = np.vstack([log_xit, X_i_t])
 
-            log_xit = np.vstack([log_xit, X_i_t])
-
-            # if don't know, break
-            if Y_i[t].shape[0] == a_t:
+            # if don't know, break, except if its the first two!
+            if Y_i[t].shape[0] == a_t and not t==0 and not t==1:
                 # log X
                 #log_X.append(log_xit)
                 log_sim_lengths[i] = t
@@ -215,7 +242,7 @@ def run_ms(
 
 
 
-        # compute RL loss
+        # compute RL loss (just merge these together from two tasks)
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         #print("rewards:", rewards)
         #print("values:", values)
