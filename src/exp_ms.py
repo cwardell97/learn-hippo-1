@@ -23,9 +23,7 @@ def run_ms(
 
 '''
 counter_fact: modulates sampling for counter factual premises
-k: dictates number of seed feature value pairs
-
-'''
+k: dictates number of seed feature value pairs'''
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
     X_train = np.array(training_data[0])
