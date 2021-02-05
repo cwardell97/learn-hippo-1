@@ -20,6 +20,7 @@ def run_ms(
         learning=True, get_cache=True, get_data=True,
         counter_fact=False, k=2
 ):
+
 '''
 counter_fact: modulates sampling for counter factual premises
 k: dictates number of seed feature value pairs
@@ -138,6 +139,10 @@ k: dictates number of seed feature value pairs
                     log_targ_a[i].append(to_sqnp(Y_i[t]))
 
         '''sample simulation seeds'''
+        # init seed dicts
+        seed_dictX = {}
+        seed_dictY = {}
+
         if not counter_fact:
             # rand X,Y from X_dict/Y_dict for seeds
             j = rd.randint(0,k)
@@ -152,7 +157,7 @@ k: dictates number of seed feature value pairs
                 seed_dictX["seed_X{0}".format(k)] = X_j[pair_nums[k]]
                 seed_dictY["seed_Y{0}".format(k)] = Y_j[pair_nums[k]]
 
-        # count_fact --> sample one seed from each event 
+        # count_fact --> sample one seed from each event
         else:
             for k in range(k):
                 # get random # from 0,pad_len
@@ -160,85 +165,130 @@ k: dictates number of seed feature value pairs
                 seed_dictX["seed_X{0}".format(k)] = X_dict["X_{0}".format(k)][ran]
                 seed_dictY["seed_Y{0}".format(k)] = Y_dict["Y_{0}".format(k)][ran]
 
-        '''now predict'''
+        '''seed simulation, then predict'''
         for t in range(pad_len):
-            if t == 0:
-                log_sim_lengths[i] = pad_len
-                X_i_t = X_i_t0
-            if t == 1:
-                X_i_t = X_i_t1
 
-            ''' Don't understand 6lns below'''
-            #t_relative = t % T_part
-            #in_2nd_part = t >= T_part
-            #print(i,t)
-            if not in_2nd_part:
+            if t<(k-1):
+                # do event prediction while t<k, ie during seeding expect last
+                t_relative = t % T_part
+                #in_2nd_part = t >= T_part REMOVE
+
+                #if not in_2nd_part: REMOVE
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
+
+                #else: REMOVE
+                #    penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
+
+                # testing condition
+                if slience_recall_time is not None:
+                    slience_recall(t_relative, in_2nd_part,
+                                   slience_recall_time, agent)
+
+                # whether to encode
+                set_encoding_flag(t, enc_times, cond_i, agent)
+
+                # forward (CHANGE: might need torch conversion)
+                torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
+                x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor), [penalty_rep])
+                pi_a_t, v_t, hc_t, cache_t = agent.forward(
+                    x_it.view(1, 1, -1), hc_t)
+                # after delay period, compute loss
+                a_t, p_a_t = agent.pick_action(pi_a_t)
+                # get reward
+                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(t)], penalty_val)
+                # cache the results for later RL loss computation REMOVE
+                rewards.append(r_t)
+                probs.append(p_a_t)
+                ents.append(entropy(pi_a_t))
+
+            elif k=t:
+                # add in case for t=k, for first seed, but also sims_data
+                # whether to encode
+                set_encoding_flag(t, enc_times, cond_i, agent)
+
+                # forward (CHANGE: might need torch conversion)
+                torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
+                x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor), [penalty_rep])
+                pi_a_t, v_t, hc_t, cache_t = agent.forward(
+                    x_it.view(1, 1, -1), hc_t)
+                # after delay period, compute loss
+                a_t, p_a_t = agent.pick_action(pi_a_t)
+                # get reward
+                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(t)], penalty_val)
+                # cache the results for later RL loss computation REMOVE
+                rewards.append(r_t)
+                probs.append(p_a_t)
+                ents.append(entropy(pi_a_t))
+                # convert model prediction to input for next timesteps
+                X_i_t = io_convert(a_t, t, p.env.n_param, Y_i.shape[1])
+
             else:
-                penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
+                # now just predict for rest, once k<t
+                #start prediction task immediately after the last seed (@t=k)
+                penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
 
-            # testing condition
-            if slience_recall_time is not None:
-                slience_recall(t_relative, in_2nd_part,
-                               slience_recall_time, agent)
-            # whether to encode
-            set_encoding_flag(t, enc_times, cond_i, agent)
+                # testing condition
+                if slience_recall_time is not None:
+                    slience_recall(t_relative, in_2nd_part,
+                                   slience_recall_time, agent)
+                # whether to encode
+                set_encoding_flag(t, enc_times, cond_i, agent)
 
-            torch_x_i_t = torch.from_numpy(X_i_t)
-            # forward
-            x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor), [penalty_rep])
-            pi_a_t, v_t, hc_t, cache_t = agent.forward(
-                x_it.view(1, 1, -1), hc_t)
-            # after delay period, compute loss
-            a_t, p_a_t = agent.pick_action(pi_a_t)
-            # get reward
-            r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
+                torch_x_i_t = torch.from_numpy(X_i_t)
+                # forward
+                x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor), [penalty_rep])
+                pi_a_t, v_t, hc_t, cache_t = agent.forward(
+                    x_it.view(1, 1, -1), hc_t)
+                # after delay period, compute loss
+                a_t, p_a_t = agent.pick_action(pi_a_t)
+                # get reward
+                r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
 
-            torch.set_printoptions(profile="full")
+                torch.set_printoptions(profile="full")
 
 
-            # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
-            X_i_t = io_convert(a_t, t, p.env.n_param, Y_i.shape[1])
+                # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
+                X_i_t = io_convert(a_t, t, p.env.n_param, Y_i.shape[1])
 
-            # cache the results for later RL loss computation
-            rewards.append(r_t)
-            values.append(v_t)
-            probs.append(p_a_t)
-            ents.append(entropy(pi_a_t))
-            # compute supervised loss (Don't understand, I can remove, right?)
-            #yhat_t = torch.squeeze(pi_a_t)[:-1]
-            #loss_sup += F.mse_loss(yhat_t, torch.from_numpy(Y_i[t]))
+                # cache the results for later RL loss computation
+                rewards.append(r_t)
+                values.append(v_t)
+                probs.append(p_a_t)
+                ents.append(entropy(pi_a_t))
+                # compute supervised loss (Don't understand, I can remove, right?)
+                #yhat_t = torch.squeeze(pi_a_t)[:-1]
+                #loss_sup += F.mse_loss(yhat_t, torch.from_numpy(Y_i[t]))
 
-            # if not supervised:
-            # update WM/EM bsaed on the condition
-            hc_t = cond_manipulation(
-                cond_i, t, event_ends[0], hc_t, agent)
+                # if not supervised:
+                # update WM/EM bsaed on the condition
+                hc_t = cond_manipulation(
+                    cond_i, t, event_ends[0], hc_t, agent)
 
-            # cache results for later analysis
-            if get_cache:
-                log_cache_i[t] = cache_t
-            # for behavioral stuff, only record prediction time steps
-            if t % T_part >= pad_len:
-                log_dist_a[i].append(to_sqnp(pi_a_t))
-                log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t])))
+                # cache results for later analysis
+                if get_cache:
+                    log_cache_i[t] = cache_t
+                # for behavioral stuff, only record prediction time steps
+                if t % T_part >= pad_len:
+                    log_dist_a[i].append(to_sqnp(pi_a_t))
+                    log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t])))
 
-            # create array to store X vals throughout trial
-            #if t == 0:
-            #    log_xit = np.empty(np.atleast_2d(X_i_t).shape)
-            #log_xit = np.vstack([log_xit, X_i_t])
+                # create array to store X vals throughout trial
+                #if t == 0:
+                #    log_xit = np.empty(np.atleast_2d(X_i_t).shape)
+                #log_xit = np.vstack([log_xit, X_i_t])
 
-            # if don't know, break, except if its the first two!
-            if Y_i[t].shape[0] == a_t and not t==0 and not t==1:
-                # log X
-                #log_X.append(log_xit)
-                log_sim_lengths[i] = t
-                for j in range(t,T_total):
-                    log_dist_a[i].append(0)
-                    log_targ_a[i].append(0)
-                break
-            # if last timestep t, log X
-            #if t%T_total == 0 or t%T_total == pad_len:
-            #    log_X.append(log_xit)
+                # if don't know, break, except if its the first two!
+                if Y_i[t].shape[0] == a_t:
+                    # log X
+                    #log_X.append(log_xit)
+                    log_sim_lengths[i] = t
+                    for j in range(t,T_total):
+                        log_dist_a[i].append(0)
+                        log_targ_a[i].append(0)
+                    break
+                # if last timestep t, log X
+                #if t%T_total == 0 or t%T_total == pad_len:
+                #    log_X.append(log_xit)
 
 
 
