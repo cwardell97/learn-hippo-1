@@ -195,6 +195,7 @@ Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 sims_lengths = np.zeros(n_epoch,)
 
+k = 2
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
@@ -206,7 +207,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         agent, optimizer,
         task, p, n_examples, tpath,
         fix_penalty=penalty,
-        learning=False, get_data=True,
+        learning=False, get_data=True, k=k
     )
 
 
