@@ -9,7 +9,7 @@ from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
-from models import compute_returns, compute_a2c_loss, get_reward_ms
+from models import compute_returns, compute_a2c_loss, get_reward_ms, get_reward
 from utils.io import pickle_load_dict
 
 ''' check that supervised and cond_i have all been removed '''
@@ -18,12 +18,9 @@ def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
         learning=True, get_cache=True, get_data=True,
-        counter_fact=False, k=2
+        counter_fact=False, seed_num=2, mem_num=2
 ):
 
-'''
-counter_fact: modulates sampling for counter factual premises
-k: dictates number of seed feature value pairs'''
     # load training data
     training_data = pickle_load_dict(fpath).pop('XY')
     X_train = np.array(training_data[0])
@@ -50,20 +47,24 @@ k: dictates number of seed feature value pairs'''
         #j = rd.randint(0,(n_examples_test-1))
 
         # sample k X & Ys randomly without replacement
-        data_sample_ind=np.random.choice(n_examples,k,replace=False)
+        data_sample_ind=np.random.choice(n_examples,mem_num,replace=False)
         X_dict = {}
         Y_dict = {}
         l = 0
         for k in data_sample_ind:
             X_dict["X_{0}".format(l)] = X_train[k,:,:]
             Y_dict["Y_{0}".format(l)] = Y_train[k,:,:]
+            print("key:", "X_{0}".format(l), "k: ", k)
             l+=1
 
         # get time info
-        T_total = X_i.shape[0]
+        T_total = np.shape(X_dict["X_{0}".format(1)])[0]
         print("T_total:", T_total)
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
+        pad_len = T_part
+        print("pad_len: ", pad_len)
+        print("T_part:", T_part)
 
         # attach cond flag
         cond_flag = torch.zeros(T_total, 1)
@@ -86,11 +87,45 @@ k: dictates number of seed feature value pairs'''
         agent.retrieval_off()
         agent.encoding_off()
 
-        ''' Load em with k events'''
-        for k in range(k):
+        '''sample simulation seeds'''
+        # init seed dicts
+        seed_dictX = {}
+        seed_dictY = {}
+
+        if not counter_fact:
+            # rand X,Y from X_dict/Y_dict for seeds
+            j = np.random.choice(seed_num)
+            X_j = X_dict["X_{0}".format(j)]
+            Y_j = Y_dict["Y_{0}".format(j)]
+            # select k f/v pairs from within X
+            print("pad_len: ", pad_len)
+            pair_nums = np.random.choice(pad_len,seed_num,replace=False)
+            seed_dict = {}
+
+            for sn in range(seed_num):
+                # load X,Y for specific events
+                seed_dictX["seed_X{0}".format(sn)] = X_j[pair_nums[sn]]
+                seed_dictY["seed_Y{0}".format(sn)] = Y_j[pair_nums[sn]]
+
+        # count_fact --> sample seeds from both events (CHANGE FOR memnum>2)
+        else:
+            for sn in range(seed_num):
+                # even num draw from mem1
+                if (sn%2) == 0:
+                    seed_dictX["seed_X{0}".format(sn)] = X_dict["X_{0}".format(0)][pair_nums[sn]]
+                    seed_dictY["seed_Y{0}".format(sn)] = Y_dict["Y_{0}".format(0)][pair_nums[sn]]
+                # odd from mem2
+                else:
+                    seed_dictX["seed_X{0}".format(sn)] = X_dict["X_{0}".format(1)][pair_nums[sn]]
+                    seed_dictY["seed_Y{0}".format(sn)] = Y_dict["Y_{0}".format(1)][pair_nums[sn]]
+
+
+        ''' Load em with 'mem_num' events'''
+        for mn in range(mem_num-1):
+            print(mn)
             # load X,Y for specific events
-            X_k = X_dict["X_{0}".format(k)]
-            Y_k = Y_dict["Y_{0}".format(k)]
+            X_mn = X_dict["X_{0}".format(mn)]
+            Y_mn = Y_dict["Y_{0}".format(mn)]
             for t in range(pad_len):
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
@@ -109,14 +144,16 @@ k: dictates number of seed feature value pairs'''
 
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
+                torch_X_mn = torch.from_numpy(X_mn[t])
                 # forward
-                x_it = append_prev_info(X_k[t], [penalty_rep])
+                x_it = append_prev_info(torch_X_mn, [penalty_rep])
                 pi_a_t, v_t, hc_t, cache_t = agent.forward(
                     x_it.view(1, 1, -1), hc_t)
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward
-                r_t = get_reward(a_t, Y_k[t], penalty_val)
+
+                r_t = get_reward(a_t, Y_mn[t], penalty_val)
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
                 values.append(v_t)
@@ -136,37 +173,11 @@ k: dictates number of seed feature value pairs'''
                     log_dist_a[i].append(to_sqnp(pi_a_t))
                     log_targ_a[i].append(to_sqnp(Y_i[t]))
 
-        '''sample simulation seeds'''
-        # init seed dicts
-        seed_dictX = {}
-        seed_dictY = {}
-
-        if not counter_fact:
-            # rand X,Y from X_dict/Y_dict for seeds
-            j = rd.randint(0,k)
-            X_j = X_dict["X_{0}".format(j)]
-            Y_j = Y_dict["Y_{0}".format(j)]
-            # select k f/v pairs from within X
-            pair_nums = np.random.choice(pad_len,k,replace=False)
-            seed_dict = {}
-
-            for k in range(k):
-                # load X,Y for specific events
-                seed_dictX["seed_X{0}".format(k)] = X_j[pair_nums[k]]
-                seed_dictY["seed_Y{0}".format(k)] = Y_j[pair_nums[k]]
-
-        # count_fact --> sample one seed from each event
-        else:
-            for k in range(k):
-                # get random # from 0,pad_len
-                ran = np.random.choice(pad_len,1)
-                seed_dictX["seed_X{0}".format(k)] = X_dict["X_{0}".format(k)][ran]
-                seed_dictY["seed_Y{0}".format(k)] = Y_dict["Y_{0}".format(k)][ran]
-
         '''seed simulation, then predict'''
         for t in range(pad_len):
-
-            if t<(k-1):
+            global X_i_t
+            X_i_t = np.zeros(seed_dictX["seed_X{0}".format(0)].shape)
+            if t<(seed_num-1):
                 # do event prediction while t<k, ie during seeding expect last
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
@@ -187,38 +198,53 @@ k: dictates number of seed feature value pairs'''
 
                 # forward (CHANGE: might need torch conversion)
                 torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
-                x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor), [penalty_rep])
+                x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor),
+                [penalty_rep]
+                )
+
                 pi_a_t, v_t, hc_t, cache_t = agent.forward(
                     x_it.view(1, 1, -1), hc_t)
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward
-                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(t)], penalty_val)
+                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(t)],
+                penalty_val
+                )
+
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
 
-            elif k=t:
+            elif seed_num==t:
+
                 # add in case for t=k, for first seed, but also sims_data
                 # whether to encode
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
                 # forward (CHANGE: might need torch conversion)
-                torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
-                x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor), [penalty_rep])
+                torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(0)])
+                x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor),
+                [penalty_rep]
+                )
+
                 pi_a_t, v_t, hc_t, cache_t = agent.forward(
                     x_it.view(1, 1, -1), hc_t)
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward
-                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(t)], penalty_val)
+                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(0)],
+                penalty_val
+                )
+                
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 # convert model prediction to input for next timesteps
-                X_i_t = io_convert(a_t, t, p.env.n_param, Y_i.shape[1])
+                X_i_t = io_convert(a_t, t, p.env.n_param,
+                seed_dictY["seed_Y{0}".format(0)].shape[0]
+                )
 
             else:
                 # now just predict for rest, once k<t
@@ -239,14 +265,17 @@ k: dictates number of seed feature value pairs'''
                     x_it.view(1, 1, -1), hc_t)
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
-                # get reward
-                r_t = get_reward_ms(a_t, Y_i[t], penalty_val)
+                # get reward, use first Y_seed for DK length arg
+                r_t = get_reward_ms(a_t, seed_dictY["seed_Y{0}".format(0)], penalty_val)
 
                 torch.set_printoptions(profile="full")
 
 
                 # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
-                X_i_t = io_convert(a_t, t, p.env.n_param, Y_i.shape[1])
+                # print("yshape: ", seed_dictY["seed_Y{0}".format(0)].shape)DELETE
+                X_i_t = io_convert(a_t, t, p.env.n_param,
+                seed_dictY["seed_Y{0}".format(0)].shape[0]
+                )
 
                 # cache the results for later RL loss computation
                 rewards.append(r_t)
@@ -270,23 +299,15 @@ k: dictates number of seed feature value pairs'''
                     log_dist_a[i].append(to_sqnp(pi_a_t))
                     log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t])))
 
-                # create array to store X vals throughout trial
-                #if t == 0:
-                #    log_xit = np.empty(np.atleast_2d(X_i_t).shape)
-                #log_xit = np.vstack([log_xit, X_i_t])
-
                 # if don't know, break, except if its the first two!
-                if Y_i[t].shape[0] == a_t:
-                    # log X
-                    #log_X.append(log_xit)
+                if seed_dictY["seed_Y{0}".format(0)].shape[0] == a_t:
+
                     log_sim_lengths[i] = t
                     for j in range(t,T_total):
                         log_dist_a[i].append(0)
                         log_targ_a[i].append(0)
                     break
-                # if last timestep t, log X
-                #if t%T_total == 0 or t%T_total == pad_len:
-                #    log_X.append(log_xit)
+
 
 
 
