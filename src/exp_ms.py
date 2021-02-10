@@ -62,7 +62,7 @@ def run_ms(
         print("T_total:", T_total)
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
-        pad_len = T_part
+        #pad_len = T_part
         print("pad_len: ", pad_len)
         print("T_part:", T_part)
 
@@ -98,8 +98,7 @@ def run_ms(
             X_j = X_dict["X_{0}".format(j)]
             Y_j = Y_dict["Y_{0}".format(j)]
             # select k f/v pairs from within X
-            print("pad_len: ", pad_len)
-            pair_nums = np.random.choice(pad_len,seed_num,replace=False)
+            pair_nums = np.random.choice(T_part,seed_num,replace=False)
             seed_dict = {}
 
             for sn in range(seed_num):
@@ -126,7 +125,7 @@ def run_ms(
             # load X,Y for specific events
             X_mn = X_dict["X_{0}".format(mn)]
             Y_mn = Y_dict["Y_{0}".format(mn)]
-            for t in range(pad_len):
+            for t in range(T_part):
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
 
@@ -168,13 +167,14 @@ def run_ms(
                 # cache results for later analysis REMOVE
                 if get_cache:
                     log_cache_i[t] = cache_t
-                # for behavioral stuff, only record prediction time steps
-                if t % T_part >= pad_len:
+                # for behavioral stuff, only record prediction time steps DELETE
+                '''if t % T_part >= pad_len:
                     log_dist_a[i].append(to_sqnp(pi_a_t))
-                    log_targ_a[i].append(to_sqnp(Y_i[t]))
+                    log_targ_a[i].append(to_sqnp(Y_i[t]))'''
+
 
         '''seed simulation, then predict'''
-        for t in range(pad_len):
+        for t in range(T_part):
             global X_i_t
             X_i_t = np.zeros(seed_dictX["seed_X{0}".format(0)].shape)
             if t<(seed_num-1):
@@ -236,7 +236,7 @@ def run_ms(
                 r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(0)],
                 penalty_val
                 )
-                
+
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
                 probs.append(p_a_t)
@@ -245,6 +245,12 @@ def run_ms(
                 X_i_t = io_convert(a_t, t, p.env.n_param,
                 seed_dictY["seed_Y{0}".format(0)].shape[0]
                 )
+                # if don't know, break, except if its the first two!
+                if seed_dictY["seed_Y{0}".format(0)].shape[0] == a_t:
+                    for j in range(t,T_total):
+                        log_dist_a[i].append(0)
+                        log_targ_a[i].append(0)
+                    break
 
             else:
                 # now just predict for rest, once k<t
@@ -295,19 +301,18 @@ def run_ms(
                 if get_cache:
                     log_cache_i[t] = cache_t
                 # for behavioral stuff, only record prediction time steps
-                if t % T_part >= pad_len:
+                '''if t % T_part >= pad_len:
                     log_dist_a[i].append(to_sqnp(pi_a_t))
-                    log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t])))
+                    log_targ_a[i].append(to_sqnp(torch.from_numpy(Y_i[t])))'''
 
                 # if don't know, break, except if its the first two!
                 if seed_dictY["seed_Y{0}".format(0)].shape[0] == a_t:
-
-                    log_sim_lengths[i] = t
                     for j in range(t,T_total):
                         log_dist_a[i].append(0)
                         log_targ_a[i].append(0)
                     break
-
+        # log sim length after t loop
+        log_sim_lengths[i] = t
 
 
 
