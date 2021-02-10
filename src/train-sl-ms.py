@@ -162,9 +162,9 @@ agent, optimizer = load_ckpt(
     epoch_load, train_logsubpath['ckpts'], agent)
 
 # init scheduler REMOVE comment
-#scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
-#    optimizer, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
-#    verbose=True)
+scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
+    verbose=True)
 
 
 # if data dir does not exsits ... skip
@@ -235,8 +235,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     #update lr scheduler REMOVE Comment
     #neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
-    #neg_pol_score = (pad_len - sims_lengths[epoch_id])/pad_len
-    #scheduler_rl.step(neg_pol_score)
+    neg_pol_score = (pad_len - sims_lengths[epoch_id])/pad_len
+    scheduler_rl.step(neg_pol_score)
 
 
 
