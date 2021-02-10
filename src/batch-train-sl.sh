@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-zero-scheduler'
+exp_name='Mental-Sims-New-Arch'
 n_epoch=2000
 n_branch=4
 
