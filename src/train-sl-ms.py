@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pdb
 
 from models import LCALSTM as Agent
 from task import SequenceLearning
@@ -45,7 +46,7 @@ parser.add_argument('--cmpt', default=0.8, type=float)
 parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=2, type=int)
-parser.add_argument('--n_examples', default=256, type=int)
+parser.add_argument('--n_examples', default=2, type=int)
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -146,7 +147,7 @@ if enc_size != enc_size:
 fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
-'''
+
 # hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -155,7 +156,7 @@ train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
-
+'''
 
 # load model
 agent, optimizer = load_ckpt(
@@ -165,7 +166,6 @@ agent, optimizer = load_ckpt(
 scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True)
-
 
 # if data dir does not exsits ... skip
 if agent is None:
@@ -207,7 +207,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         agent, optimizer,
         task, p, n_examples, tpath,
         fix_penalty=penalty,
-        learning=False, get_data=True, seed_num=2, mem_num=2
+        learning=True, get_data=True, seed_num=2,
+        mem_num=2, counter_fact=False
     )
 
 
@@ -215,6 +216,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     sims_lengths[epoch_id] = sims_data
+    print("epoch ", epoch_id, " av. sim length: ", sims_data)
 
     '''# compute stats
     bm_ = compute_behav_metrics(targ_a, dist_a, task)
@@ -235,7 +237,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     #update lr scheduler REMOVE Comment
     #neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
-    neg_pol_score = (pad_len - sims_lengths[epoch_id])/pad_len
+    neg_pol_score = (n_param - sims_lengths[epoch_id])/n_param
     scheduler_rl.step(neg_pol_score)
 
 
@@ -311,7 +313,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 '''
 
-'''eval the model'''
+'''eval the model
 pad_len_test = 0
 p_rm_ob = 0
 n_examples_test = 256
@@ -348,3 +350,4 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
     'sims_data': sims_data}
     fpath = os.path.join(test_data_dir, test_data_fname)
     pickle_save_dict(test_data_dict, fpath)
+'''
