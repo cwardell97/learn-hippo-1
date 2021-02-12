@@ -120,8 +120,8 @@ def run_ms(
 
 
         ''' Load em with 'mem_num' events'''
-        for mn in range(mem_num-1):
-            print(mn)
+        for mn in range(mem_num):
+            print("mem_num: ", mn)
             # load X,Y for specific events
             X_mn = X_dict["X_{0}".format(mn)]
             Y_mn = Y_dict["Y_{0}".format(mn)]
@@ -176,7 +176,9 @@ def run_ms(
         '''seed simulation, then predict'''
         for t in range(T_part):
             global X_i_t
-            X_i_t = np.zeros(seed_dictX["seed_X{0}".format(0)].shape)
+            # init X_i_t @t=0
+            if t==0:
+                X_i_t = np.zeros(seed_dictX["seed_X{0}".format(0)].shape)
             if t<(seed_num-1):
                 # do event prediction while t<k, ie during seeding expect last
                 t_relative = t % T_part
@@ -216,14 +218,14 @@ def run_ms(
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
 
-            elif seed_num==t:
+            elif (seed_num-1)==t:
 
                 # add in case for t=k, for first seed, but also sims_data
                 # whether to encode
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
                 # forward (CHANGE: might need torch conversion)
-                torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(0)])
+                torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
                 x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor),
                 [penalty_rep]
                 )
@@ -233,7 +235,7 @@ def run_ms(
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward
-                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(0)],
+                r_t = get_reward_ms(a_t, seed_dictY["seed_Y{0}".format(0)],
                 penalty_val
                 )
 
@@ -242,14 +244,13 @@ def run_ms(
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 # convert model prediction to input for next timesteps
+                print("n_param: ", p.env.n_param)
+                pdb.set_trace()
                 X_i_t = io_convert(a_t, t, p.env.n_param,
                 seed_dictY["seed_Y{0}".format(0)].shape[0]
                 )
-                # if don't know, break, except if its the first two!
+                # if don't know, break
                 if seed_dictY["seed_Y{0}".format(0)].shape[0] == a_t:
-                    for j in range(t,T_total):
-                        log_dist_a[i].append(0)
-                        log_targ_a[i].append(0)
                     break
 
             else:
@@ -307,9 +308,9 @@ def run_ms(
 
                 # if don't know, break, except if its the first two!
                 if seed_dictY["seed_Y{0}".format(0)].shape[0] == a_t:
-                    for j in range(t,T_total):
-                        log_dist_a[i].append(0)
-                        log_targ_a[i].append(0)
+                    #for j in range(t,T_total):
+                    #    log_dist_a[i].append(0)
+                    #    log_targ_a[i].append(0)
                     break
         # log sim length after t loop
         log_sim_lengths[i] = t
@@ -317,7 +318,7 @@ def run_ms(
 
 
 
-
+        pdb.set_trace()
         # compute RL loss (just merge these together from two tasks)
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         #print("rewards:", rewards)
