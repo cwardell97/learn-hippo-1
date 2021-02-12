@@ -245,7 +245,7 @@ def run_ms(
                 ents.append(entropy(pi_a_t))
                 # convert model prediction to input for next timesteps
                 print("n_param: ", p.env.n_param)
-                pdb.set_trace()
+
                 X_i_t = io_convert(a_t, t, p.env.n_param,
                 seed_dictY["seed_Y{0}".format(0)].shape[0]
                 )
@@ -318,7 +318,7 @@ def run_ms(
 
 
 
-        pdb.set_trace()
+        #pdb.set_trace()
         # compute RL loss (just merge these together from two tasks)
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         #print("rewards:", rewards)
