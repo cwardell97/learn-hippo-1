@@ -332,7 +332,7 @@ def run_ms(
             optimizer.zero_grad()
             loss = Variable(loss, requires_grad = True)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
+            torch.nn.utils.clip_grad_norm_(agent.hpc, 1)
             optimizer.step()
 
         # after every event sequence, log stuff
