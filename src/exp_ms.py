@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pdb
 import random as rd
 
-
+from torch.autograd import Variable
 from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
@@ -330,6 +330,7 @@ def run_ms(
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
+            loss = Variable(loss, requires_grad = True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
             optimizer.step()
