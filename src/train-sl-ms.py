@@ -200,7 +200,7 @@ k = 2
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
-
+    print("epoch_id", epoch_id)
 
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
