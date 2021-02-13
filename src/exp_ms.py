@@ -91,6 +91,7 @@ def run_ms(
         # init seed dicts
         seed_dictX = {}
         seed_dictY = {}
+        pair_nums = np.random.choice(T_part,seed_num,replace=False)
 
         if not counter_fact:
             # rand X,Y from X_dict/Y_dict for seeds
@@ -98,7 +99,6 @@ def run_ms(
             X_j = X_dict["X_{0}".format(j)]
             Y_j = Y_dict["Y_{0}".format(j)]
             # select k f/v pairs from within X
-            pair_nums = np.random.choice(T_part,seed_num,replace=False)
             seed_dict = {}
 
             for sn in range(seed_num):
