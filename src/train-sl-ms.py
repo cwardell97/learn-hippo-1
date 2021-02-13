@@ -161,6 +161,7 @@ train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-
 # load model
 agent, optimizer = load_ckpt(
     epoch_load, train_logsubpath['ckpts'], agent)
+print(optimizer)
 
 # init scheduler REMOVE comment
 scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
