@@ -327,12 +327,14 @@ def run_ms(
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
+        print("agent param: ", agent.parameters())
+        print("agent hpc req grad: ", agent.hpc.requires_grad_ )
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss = Variable(loss, requires_grad = True)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(agent.hpc, 1)
+            torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
             optimizer.step()
 
         # after every event sequence, log stuff

@@ -147,7 +147,7 @@ if enc_size != enc_size:
 fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
-'''
+
 # hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -156,7 +156,7 @@ train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
-
+'''
 
 # load model
 agent, optimizer = load_ckpt(
