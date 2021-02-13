@@ -328,7 +328,7 @@ def run_ms(
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
         print("agent param: ", agent.parameters())
-        print("epoch_id")
+        print("epoch_id", epoch_id)
         print("agent hpc req grad: ", agent.hpc.requires_grad_ )
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
