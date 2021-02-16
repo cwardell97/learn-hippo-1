@@ -306,16 +306,16 @@ fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 f.suptitle('learning curves', fontsize=15)
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-f.tight_layout()
-fig_path = os.path.join(log_subpath['figs'], 'epoch-1000-sl.png')
-f.suptitle('learning curves', fontsize=15)
-f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+f2.tight_layout()
+fig2_path = os.path.join(log_subpath['figs'], 'epoch-1-sl.png')
+f2.suptitle('learning curves', fontsize=15)
+f2.savefig(fig_path2, dpi=100, bbox_to_anchor='tight')
 
 
-f.tight_layout()
-fig_path = os.path.join(log_subpath['figs'], 'epoch-1000-sl.png')
-f.suptitle('learning curves', fontsize=15)
-f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+f3.tight_layout()
+fig_path3 = os.path.join(log_subpath['figs'], 'epoch-1000-sl.png')
+f3.suptitle('learning curves', fontsize=15)
+f3.savefig(fig_path3, dpi=100, bbox_to_anchor='tight')
 
 
 
