@@ -110,6 +110,8 @@ def run_tz(
                 log_targ_a[i].append(to_sqnp(Y_i[t]))
 
         # compute RL loss
+        print("agent param: ", agent.parameters())
+        print("agent hpc req grad: ", agent.hpc.requires_grad_ )
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()

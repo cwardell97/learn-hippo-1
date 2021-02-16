@@ -194,7 +194,8 @@ Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
-sims_lengths = np.zeros(n_epoch,)
+av_sims_lengs = np.zeros(n_epoch,)
+all_sims_lengs = np.zeros((n_epoch, n_examples))
 
 k = 2
 epoch_id = 0
@@ -216,7 +217,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
-    sims_lengths[epoch_id] = sims_data
+    av_sims_lengs[epoch_id], all_sim_lengs = sims_data
     print("epoch ", epoch_id, " av. sim length: ", sims_data)
 
     '''# compute stats
@@ -238,7 +239,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     #update lr scheduler REMOVE Comment
     #neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
-    neg_pol_score = (n_param - sims_lengths[epoch_id])/n_param
+    neg_pol_score = (n_param - av_sims_lengs[epoch_id])/n_param
     scheduler_rl.step(neg_pol_score)
 
 
@@ -250,10 +251,22 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
 '''plot learning curves'''
 f, axes = plt.subplots(figsize=(10, 9)) #, sharex=True)
-axes.plot(sims_lengths)
+axes.plot(av_sims_lengs)
 axes.set_ylabel('sim length')
 axes.axhline(0, color='grey', linestyle='--')
 axes.set_xlabel('epoch')
+
+f2, axes2 = plt.subplots(figsize=(10, 9)) #, sharex=True)
+axes2.plot(all_sims_lengs[1,:])
+axes2.set_ylabel('sim length')
+axes2.axhline(0, color='grey', linestyle='--')
+axes2.set_xlabel('trial')
+
+f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
+axes3.plot(all_sims_lengs[1000,:])
+axes3.set_ylabel('sim length')
+axes3.axhline(0, color='grey', linestyle='--')
+axes3.set_xlabel('trial')
 #axes[0, 0].set_title(Log_return[-1])
 '''
 axes[0, 1].plot(Log_pi_ent)
@@ -291,6 +304,19 @@ f.tight_layout()
 fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 f.suptitle('learning curves', fontsize=15)
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+f.tight_layout()
+fig_path = os.path.join(log_subpath['figs'], 'epoch-1000-sl.png')
+f.suptitle('learning curves', fontsize=15)
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+
+f.tight_layout()
+fig_path = os.path.join(log_subpath['figs'], 'epoch-1000-sl.png')
+f.suptitle('learning curves', fontsize=15)
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+
 
 '''plot performance --> just plot don't knows
 # prep data
