@@ -217,7 +217,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
-    av_sims_lengs[epoch_id], all_sim_lengs = sims_data
+    [av_sims_lengs[epoch_id], all_sim_lengs] = sims_data
     print("epoch ", epoch_id, " av. sim length: ", sims_data)
 
     '''# compute stats
