@@ -358,8 +358,10 @@ def run_ms(
     if get_data:
         #X_array_list = log_X
         #sim_lenths = log_sim_lengths
-        sims_data = np.mean(log_sim_lengths)
-        out.append(sims_data)
+        av_sims_data = np.mean(log_sim_lengths)
+        all_sims_data = log_sim_lengths]
+        out.append(av_sims_data)
+        out.append(all_sims_data)
     return out
 
 
