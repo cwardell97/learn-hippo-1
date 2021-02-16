@@ -219,7 +219,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     av_sims_lengs[epoch_id] = av_sims_data
     all_sims_lengs[epoch_id] = all_sims_data
-    print("epoch ", epoch_id, " av. sim length: ", sims_data)
+    print("epoch ", epoch_id, " av. sim length: ", av_sims_lengs[epoch_id])
 
     '''# compute stats
     bm_ = compute_behav_metrics(targ_a, dist_a, task)
