@@ -35,7 +35,7 @@ def run_ms(
     log_targ_a = [[] for _ in range(n_examples)]
     log_cache = [None] * n_examples
     log_X = []
-    log_sim_lengths = [[] for _ in range(n_examples)]
+    log_sim_lengths = np.zeros(n_examples)
     av_a_t = np.zeros(n_examples)
     av_reward = np.zeros(n_examples)
 
@@ -334,17 +334,19 @@ def run_ms(
         # if learning and not supervised
     #    print("example num", i)
 
-        for prm in agent.parameters():
+
+        '''for prm in agent.parameters():
             #print(prm)
             if prm.requires_grad==True:
                 print("name:", prm.name)
-                print("data:", para.name)
+                print("data:", prm.data)'''
 
-        #print("agent hpc req grad: ", agent.hpc.data() )
+        print("agent hpc req grad: ", agent.hpc.requires_grad_ )
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
+            print("loss", loss)
             optimizer.zero_grad()
-            loss = Variable(loss, requires_grad = True)
+            #loss = Variable(loss, requires_grad = True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
             optimizer.step()
