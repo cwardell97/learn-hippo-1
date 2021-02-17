@@ -11,7 +11,7 @@ from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
 from models import compute_returns, compute_a2c_loss, get_reward_ms, get_reward
 from utils.io import pickle_load_dict
-from torchsummary import summary
+#from torchsummary import summary
 
 ''' check that supervised and cond_i have all been removed '''
 
