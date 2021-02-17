@@ -11,6 +11,7 @@ from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
 from models import compute_returns, compute_a2c_loss, get_reward_ms, get_reward
 from utils.io import pickle_load_dict
+from torchsummary import summary
 
 ''' check that supervised and cond_i have all been removed '''
 
@@ -35,9 +36,13 @@ def run_ms(
     log_cache = [None] * n_examples
     log_X = []
     log_sim_lengths = [[] for _ in range(n_examples)]
+    av_a_t = np.zeros(n_examples)
+    av_reward = np.zeros(n_examples)
 
     # note that first and second half of x is redudant, only need to show half
     for i in range(n_examples):
+        log_a_t = []
+        #pdb.set_trace()
         # pick a condition
         cond_i = 'DM'
         # cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
@@ -54,17 +59,13 @@ def run_ms(
         for k in data_sample_ind:
             X_dict["X_{0}".format(l)] = X_train[k,:,:]
             Y_dict["Y_{0}".format(l)] = Y_train[k,:,:]
-            print("key:", "X_{0}".format(l), "k: ", k)
             l+=1
 
         # get time info
         T_total = np.shape(X_dict["X_{0}".format(1)])[0]
-        print("T_total:", T_total)
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
-        #pad_len = T_part
-        print("pad_len: ", pad_len)
-        print("T_part:", T_part)
+
 
         # attach cond flag
         cond_flag = torch.zeros(T_total, 1)
@@ -121,7 +122,7 @@ def run_ms(
 
         ''' Load em with 'mem_num' events'''
         for mn in range(mem_num):
-            print("mem_num: ", mn)
+            #print("mem_num: ", mn)
             # load X,Y for specific events
             X_mn = X_dict["X_{0}".format(mn)]
             Y_mn = Y_dict["Y_{0}".format(mn)]
@@ -217,6 +218,7 @@ def run_ms(
                 rewards.append(r_t)
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
+                log_a_t.append(a_t)
 
             elif (seed_num-1)==t:
 
@@ -243,8 +245,9 @@ def run_ms(
                 rewards.append(r_t)
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
+                log_a_t.append(a_t)
                 # convert model prediction to input for next timesteps
-                print("n_param: ", p.env.n_param)
+                #print("n_param: ", p.env.n_param)
 
                 X_i_t = io_convert(a_t, t, p.env.n_param,
                 seed_dictY["seed_Y{0}".format(0)].shape[0]
@@ -289,6 +292,7 @@ def run_ms(
                 values.append(v_t)
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
+                log_a_t.append(a_t)
                 # compute supervised loss (Don't understand, I can remove, right?)
                 #yhat_t = torch.squeeze(pi_a_t)[:-1]
                 #loss_sup += F.mse_loss(yhat_t, torch.from_numpy(Y_i[t]))
@@ -311,6 +315,7 @@ def run_ms(
                     #for j in range(t,T_total):
                     #    log_dist_a[i].append(0)
                     #    log_targ_a[i].append(0)
+                    print("breaking on: ", t)
                     break
         # log sim length after t loop
         log_sim_lengths[i] = t
@@ -318,7 +323,7 @@ def run_ms(
 
 
 
-        #pdb.set_trace()
+
         # compute RL loss (just merge these together from two tasks)
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         #print("rewards:", rewards)
@@ -327,14 +332,21 @@ def run_ms(
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
-        print("agent param: ", agent.parameters())
-        print("agent hpc req grad: ", agent.hpc.requires_grad_ )
+    #    print("example num", i)
+
+        for prm in agent.parameters():
+            #print(prm)
+            if prm.requires_grad==True:
+                print("name:", prm.name)
+                print("data:", para.name)
+
+        #print("agent hpc req grad: ", agent.hpc.data() )
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss = Variable(loss, requires_grad = True)
             loss.backward()
-            #torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
+            torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
             optimizer.step()
 
         # after every event sequence, log stuff
@@ -347,7 +359,12 @@ def run_ms(
         if get_cache:
             log_cache[i] = log_cache_i
 
+        av_reward[i] = np.mean(rewards)
+        av_a_t[i] = np.mean(log_a_t)
+
     # return cache
+    print("av_reward: ", np.mean(av_reward))
+    print("av_a_t: ", np.mean(av_a_t))
     log_dist_a = np.array(log_dist_a)
     log_targ_a = np.array(log_targ_a)
     results = [log_dist_a, log_targ_a, log_cache, log_cond]

@@ -45,8 +45,8 @@ parser.add_argument('--eta', default=0.1, type=float)
 parser.add_argument('--cmpt', default=0.8, type=float)
 parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
-parser.add_argument('--n_epoch', default=2, type=int)
-parser.add_argument('--n_examples', default=2, type=int)
+parser.add_argument('--n_epoch', default=5, type=int)
+parser.add_argument('--n_examples', default=5, type=int)
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -102,6 +102,8 @@ p = P(
     lr=learning_rate, eta=eta, cmpt=cmpt,
 )
 print(p.env.def_tps)
+print("p.net.eta", p.net.eta)
+
 # init env
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
@@ -149,13 +151,13 @@ fpath = os.path.join(test_data_dir, test_data_fname)
 
 '''
 # hardcode pretrained model filepath (local)
-tpath = '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
-train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
+tpath = '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
+train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
 '''
 
 # hardcode pretrained model filepath (cluster)
-tpath = '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
-train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/vary-test-penalty(trained)/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.30_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
+tpath = '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
+train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
 
 
 # load model
@@ -174,7 +176,7 @@ if agent is None:
 
 # freeze memory controlling layer
 for param in agent.parameters():
-    param.requires_grad = False
+    param.requires_grad_ = False
 agent.hpc.requires_grad_ = True
 
 # create logging dirs
@@ -219,27 +221,10 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     av_sims_lengs[epoch_id] = av_sims_data
     all_sims_lengs[epoch_id] = all_sims_data
-    print("epoch ", epoch_id, " av. sim length: ", av_sims_lengs[epoch_id])
+    print("epoch ", epoch_id, " all sim length: ", all_sims_lengs[epoch_id])
 
-    '''# compute stats
-    bm_ = compute_behav_metrics(targ_a, dist_a, task)
-    Log_acc[epoch_id], Log_mis[epoch_id], Log_dk[epoch_id] = bm_
-    acc_mu_pts_str = " ".join('%.2f' % i for i in Log_acc[epoch_id])
-    dk_mu_pts_str = " ".join('%.2f' % i for i in Log_dk[epoch_id])
-    mis_mu_pts_str = " ".join('%.2f' % i for i in Log_mis[epoch_id])
-    # print
-    runtime = time.time() - time0
-    msg = '%3d | R: %.2f, acc: %s, dk: %s, mis: %s, ent: %.2f | ' % (
-        epoch_id, Log_return[epoch_id],
-        acc_mu_pts_str, dk_mu_pts_str, mis_mu_pts_str, Log_pi_ent[epoch_id])
-    msg += 'L: a: %.2f c: %.2f, s: %.2f | t: %.2fs' % (
-        Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
-        Log_loss_sup[epoch_id], runtime)
-    print(msg)
-    '''
 
-    #update lr scheduler REMOVE Comment
-    #neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
+    #update lr scheduler
     neg_pol_score = (n_param - av_sims_lengs[epoch_id])/n_param
     scheduler_rl.step(neg_pol_score)
 
@@ -258,64 +243,27 @@ axes.axhline(0, color='grey', linestyle='--')
 axes.set_xlabel('epoch')
 
 f2, axes2 = plt.subplots(figsize=(10, 9)) #, sharex=True)
-axes2.plot(all_sims_lengs[1,:])
+axes2.plot(range(n_examples), all_sims_lengs[1,:])
 axes2.set_ylabel('sim length')
 axes2.axhline(0, color='grey', linestyle='--')
 axes2.set_xlabel('trial')
 
 f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
-axes3.plot(all_sims_lengs[1000,:])
+axes3.plot(range(n_examples), all_sims_lengs[n_epoch-1,:])
 axes3.set_ylabel('sim length')
 axes3.axhline(0, color='grey', linestyle='--')
 axes3.set_xlabel('trial')
-#axes[0, 0].set_title(Log_return[-1])
-'''
-axes[0, 1].plot(Log_pi_ent)
-axes[0, 1].set_ylabel('entropy')
-
-axes[1, 0].plot(Log_loss_actor, label='actor')
-axes[1, 0].plot(Log_loss_critic, label='critic')
-axes[1, 0].axhline(0, color='grey', linestyle='--')
-axes[1, 0].legend()
-axes[1, 0].set_ylabel('loss, rl')
-
-axes[1, 1].plot(Log_loss_sup)
-axes[1, 1].set_ylabel('loss, sup')
-
-for ip in range(2):
-    avg_err = np.mean(Log_mis[-10:, ip])
-    axes[2, ip].set_title(f'part {ip+1}, err = %.2f' % (avg_err))
-    axes[2, ip].plot(Log_acc[:, ip], label='acc')
-    axes[2, ip].plot(Log_acc[:, ip] + Log_dk[:, ip], label='acc+dk')
-    axes[2, ip].plot(
-        Log_acc[:, ip] + Log_dk[:, ip] + Log_mis[:, ip],
-        label='acc+dk_err', linestyle='--', color='red'
-    )
-axes[2, -1].legend()
-axes[2, 0].set_ylabel('% behavior')
-
-for i, ax in enumerate(f.axes):
-    ax.axvline(supervised_epoch, color='grey', linestyle='--')
-
-axes[-1, 0].set_xlabel('Epoch')
-axes[-1, 1].set_xlabel('Epoch')
-sns.despine()
-'''
-f.tight_layout()
-fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
-f.suptitle('learning curves', fontsize=15)
-f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-f2.tight_layout()
-fig2_path = os.path.join(log_subpath['figs'], 'epoch-1-sl.png')
-f2.suptitle('learning curves', fontsize=15)
-f2.savefig(fig_path2, dpi=100, bbox_to_anchor='tight')
 
 
-f3.tight_layout()
-fig_path3 = os.path.join(log_subpath['figs'], 'epoch-1000-sl.png')
-f3.suptitle('learning curves', fontsize=15)
-f3.savefig(fig_path3, dpi=100, bbox_to_anchor='tight')
+
+
+
+
+
+
+
+
+
 
 
 
