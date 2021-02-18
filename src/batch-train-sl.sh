@@ -1,7 +1,7 @@
 #!/bin/bash
 
 exp_name='Mental-Sims-New-CF-RM'
-n_epoch=2000
+n_epoch=6000
 n_branch=4
 
 def_prob=.25
