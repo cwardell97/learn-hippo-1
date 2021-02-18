@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-New-CF-RM'
+exp_name='Mental-Sims-New-RM'
 n_epoch=6000
 n_branch=4
 
