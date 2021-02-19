@@ -1,7 +1,7 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-New-RM'
-n_epoch=6000
+exp_name='Mental-Sims-New-Short'
+n_epoch=1000
 n_branch=4
 
 def_prob=.25
