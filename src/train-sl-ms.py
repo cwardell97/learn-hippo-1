@@ -248,7 +248,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     test_data_dir, _ = get_test_data_dir(
         log_subpath, epoch_load, test_params)
     test_data_fname = get_test_data_fname(
-        n_examples_test, fix_cond, scramble)
+        n_examples, fix_cond, scramble)
     test_data_dict = {'results': results, 'metrics': metrics,
     'av_sims_data': av_sims_data, 'all_sims_data': all_sims_data}
     fpath = os.path.join(test_data_dir, test_data_fname)
