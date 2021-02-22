@@ -242,7 +242,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         save_ckpt(epoch_id + 1, log_subpath['ckpts'], agent, optimizer)
 
     # save the data
-    test_params = [fix_penalty, pad_len_test, slience_recall_time]
+    test_params = [penalty, pad_len_test, slience_recall_time]
     test_data_dir, _ = get_test_data_dir(
         log_subpath, epoch_load, test_params)
     test_data_fname = get_test_data_fname(
