@@ -200,8 +200,9 @@ Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
-av_sims_lengs = np.zeros(n_epoch,)
+av_sims_lengs = np.zeros(n_epoch)
 all_sims_lengs = np.zeros((n_epoch, n_examples))
+av_epoch_reward = np.zeros(n_epoch)
 
 k = 2
 epoch_id = 0
@@ -211,7 +212,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
-    [results, metrics, av_sims_data, all_sims_data] = run_ms(
+    [results, metrics, av_sims_data,
+    all_sims_data, av_reward] = run_ms(
         agent, optimizer,
         task, p, n_examples, tpath,
         fix_penalty=penalty,
@@ -225,6 +227,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     av_sims_lengs[epoch_id] = av_sims_data
     all_sims_lengs[epoch_id] = all_sims_data
+    av_epoch_reward[epoch_id] = av_reward
     print("epoch ", epoch_id, " all sim length: ", all_sims_lengs[epoch_id])
 
 
@@ -251,11 +254,15 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
 
 '''plot learning curves'''
-f, axes = plt.subplots(figsize=(10, 9)) #, sharex=True)
-axes.plot(av_sims_lengs)
-axes.set_ylabel('sim length')
-axes.axhline(0, color='grey', linestyle='--')
-axes.set_xlabel('epoch')
+f, ax = plt.subplots(figsize=(10, 9)) #, sharex=True)
+ax.plot(av_sims_lengs)
+ax.set_ylabel('sim length')
+ax.axhline(0, color='grey', linestyle='--')
+ax.set_xlabel('epoch')
+ax2 = ax.twinx()
+
+ax2.plot(av_epoch_reward)
+ax2.set_ylabel("av reward", color = 'red')
 
 f2, axes2 = plt.subplots(figsize=(10, 9)) #, sharex=True)
 axes2.plot(range(n_examples), all_sims_lengs[1,:])
