@@ -238,6 +238,17 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     if np.mod(epoch_id + 1, log_freq) == 0:
         save_ckpt(epoch_id + 1, log_subpath['ckpts'], agent, optimizer)
 
+    # save the data
+    test_params = [fix_penalty, pad_len_test, slience_recall_time]
+    test_data_dir, _ = get_test_data_dir(
+        log_subpath, epoch_load, test_params)
+    test_data_fname = get_test_data_fname(
+        n_examples_test, fix_cond, scramble)
+    test_data_dict = {'results': results, 'metrics': metrics,
+    'av_sims_data': av_sims_data, 'all_sims_data': all_sims_data}
+    fpath = os.path.join(test_data_dir, test_data_fname)
+    pickle_save_dict(test_data_dict, fpath)
+
 
 '''plot learning curves'''
 f, axes = plt.subplots(figsize=(10, 9)) #, sharex=True)
@@ -325,14 +336,14 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
     learning=False, get_data=True,
     )
 
-    # save the data
-    test_params = [fix_penalty, pad_len_test, slience_recall_time]
-    test_data_dir, _ = get_test_data_dir(
-        log_subpath, epoch_load, test_params)
-    test_data_fname = get_test_data_fname(
-        n_examples_test, fix_cond, scramble)
-    test_data_dict = {'results': results, 'metrics': metrics,
-    'sims_data': sims_data}
-    fpath = os.path.join(test_data_dir, test_data_fname)
-    pickle_save_dict(test_data_dict, fpath)
+# save the data
+test_params = [fix_penalty, pad_len_test, slience_recall_time]
+test_data_dir, _ = get_test_data_dir(
+    log_subpath, epoch_load, test_params)
+test_data_fname = get_test_data_fname(
+    n_examples_test, fix_cond, scramble)
+test_data_dict = {'results': results, 'metrics': metrics,
+'sims_data': sims_data}
+fpath = os.path.join(test_data_dir, test_data_fname)
+pickle_save_dict(test_data_dict, fpath)
 '''
