@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-New-Long'
+exp_name='Mental-Sims-New-Short-N_Graphs'
 n_epoch=450
 n_branch=4
 
