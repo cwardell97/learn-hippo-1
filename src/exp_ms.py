@@ -381,6 +381,7 @@ def run_ms(
         all_sims_data = log_sim_lengths
         out.append(av_sims_data)
         out.append(all_sims_data)
+        out.append(np.mean(av_reward))
     return out
 
 
