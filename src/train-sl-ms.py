@@ -256,12 +256,12 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 '''plot learning curves'''
 f, ax = plt.subplots(figsize=(10, 9)) #, sharex=True)
 ax.plot(av_sims_lengs)
-ax.set_ylabel('sim length')
+ax.set_ylabel('sim length', color = 'blue')
 ax.axhline(0, color='grey', linestyle='--')
 ax.set_xlabel('epoch')
 ax2 = ax.twinx()
 
-ax2.plot(av_epoch_reward)
+ax2.plot(av_epoch_reward, color = 'red')
 ax2.set_ylabel("av reward", color = 'red')
 
 f2, axes2 = plt.subplots(figsize=(10, 9)) #, sharex=True)
