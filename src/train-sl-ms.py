@@ -150,7 +150,7 @@ fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
 
-'''
+
 # hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -159,7 +159,7 @@ train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-m
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
-
+'''
 
 
 
@@ -203,6 +203,8 @@ Log_cond = np.zeros((n_epoch, n_examples))
 av_sims_lengs = np.zeros(n_epoch)
 all_sims_lengs = np.zeros((n_epoch, n_examples))
 av_epoch_reward = np.zeros(n_epoch)
+av_epoch_ep_reward = np.zeros(n_epoch)
+
 
 k = 2
 epoch_id = 0
@@ -212,8 +214,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
-    [results, metrics, av_sims_data,
-    all_sims_data, av_reward] = run_ms(
+    [results, metrics, sims_data,
+    reward_data] = run_ms(
         agent, optimizer,
         task, p, n_examples, tpath,
         fix_penalty=penalty,
@@ -221,13 +223,19 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         mem_num=2, counter_fact=False
     )
 
-
+    # unpack output
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
+    [av_sims_data, all_sims_data] = sims_data
+    [av_reward, av_ep_reward]= reward_data
+
+    # assign to logs
     av_sims_lengs[epoch_id] = av_sims_data
     all_sims_lengs[epoch_id] = all_sims_data
     av_epoch_reward[epoch_id] = av_reward
+    av_epoch_ep_reward[epoch_id] = av_ep_reward
+    av_epoch_ms_reward[epoch_id] = av_reward - av_ep_reward
     print("epoch ", epoch_id, " all sim length: ", all_sims_lengs[epoch_id])
 
 
@@ -257,14 +265,17 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
 '''plot learning curves'''
 f, ax = plt.subplots(figsize=(10, 9)) #, sharex=True)
-ax.plot(av_sims_lengs)
+ax.plot(av_sims_lengs, label = 'sim_lengths')
 ax.set_ylabel('sim length', color = 'blue')
 ax.axhline(0, color='grey', linestyle='--')
 ax.set_xlabel('epoch')
 ax2 = ax.twinx()
 
-ax2.plot(av_epoch_reward, color = 'red')
-ax2.set_ylabel("av reward", color = 'red')
+ax2.plot(av_epoch_reward, color = 'red', label = 'total reward')
+ax2.plot(av_epoch_ep_reward, color = 'green', label = 'e.v. reward')
+ax2.plot(av_epoch_ms_reward, color = 'orange', label = 'm.s. reward')
+ax2.set_ylabel("average reward")
+ax2.legend()
 
 f2, axes2 = plt.subplots(figsize=(10, 9)) #, sharex=True)
 axes2.plot(range(n_examples), all_sims_lengs[1,:])
