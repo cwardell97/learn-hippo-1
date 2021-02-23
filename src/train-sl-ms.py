@@ -28,7 +28,7 @@ parser.add_argument('--pad_len', default=-1, type=int)
 parser.add_argument('--def_prob', default=None, type=float)
 parser.add_argument('--n_def_tps', default=0, type=int)
 parser.add_argument('--enc_size', default=16, type=int)
-parser.add_argument('--penalty', default=4, type=int)
+parser.add_argument('--penalty', default=1, type=int)
 parser.add_argument('--penalty_random', default=1, type=int)
 parser.add_argument('--penalty_discrete', default=1, type=int)
 parser.add_argument('--penalty_onehot', default=0, type=int)
@@ -179,9 +179,9 @@ if agent is None:
     print('Agent DNE')
 
 # freeze memory controlling layer
-for param in agent.parameters():
+'''for param in agent.parameters():
     param.requires_grad_ = False
-agent.hpc.requires_grad_ = True
+agent.hpc.requires_grad_ = True'''
 
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
