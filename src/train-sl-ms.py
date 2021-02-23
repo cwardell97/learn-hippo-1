@@ -272,7 +272,7 @@ ax.set_xlabel('epoch')
 ax2 = ax.twinx()
 
 ax2.plot(av_epoch_reward, color = 'red', label = 'total reward')
-ax2.plot(av_epoch_ep_reward, color = 'green', label = 'e.v. reward')
+ax2.plot(av_epoch_ep_reward, color = 'green', label = 'e.p. reward')
 ax2.plot(av_epoch_ms_reward, color = 'orange', label = 'm.s. reward')
 ax2.set_ylabel("average reward")
 ax2.legend()
