@@ -38,10 +38,12 @@ def run_ms(
     log_sim_lengths = np.zeros(n_examples)
     av_a_t = np.zeros(n_examples)
     av_reward = np.zeros(n_examples)
+    av_ep_reward = np.zeros(n_examples)
 
     # note that first and second half of x is redudant, only need to show half
     for i in range(n_examples):
         log_a_t = []
+        ep_rewards = []
         #pdb.set_trace()
         # pick a condition
         cond_i = 'DM'
@@ -162,6 +164,7 @@ def run_ms(
                 values.append(v_t)
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
+                ep_rewards.append(r_t)
 
 
                 #update WM/EM bsaed on the condition (flushing WM / retrieve during part 2)
@@ -222,6 +225,7 @@ def run_ms(
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 log_a_t.append(a_t)
+                ep_rewards.append(r_t)
 
             elif (seed_num-1)==t:
 
@@ -365,6 +369,7 @@ def run_ms(
             log_cache[i] = log_cache_i
 
         av_reward[i] = np.mean(rewards)
+        av_ep_reward[i] = np.mean(ep_rewards)
         av_a_t[i] = np.mean(log_a_t)
 
     # return cache
@@ -384,7 +389,8 @@ def run_ms(
         all_sims_data = log_sim_lengths
         out.append(av_sims_data)
         out.append(all_sims_data)
-        out.append(np.mean(av_reward))
+    reward_data = [np.mean(av_reward), np.mean(av_ep_reward)]
+    out.append(reward_data)
     return out
 
 
