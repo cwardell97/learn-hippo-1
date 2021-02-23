@@ -96,7 +96,10 @@ def run_ms(
 
         if not counter_fact:
             # rand X,Y from X_dict/Y_dict for seeds
-            j = np.random.choice(seed_num)
+            print("X_dict len:", len(X_dict))
+            j = np.random.choice(len(X_dict))
+            print("j", j)
+
             X_j = X_dict["X_{0}".format(j)]
             Y_j = Y_dict["Y_{0}".format(j)]
             # select k f/v pairs from within X
