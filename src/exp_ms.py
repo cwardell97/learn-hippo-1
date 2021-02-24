@@ -67,6 +67,7 @@ def run_ms(
         T_total = np.shape(X_dict["X_{0}".format(1)])[0]
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
+        print("enc_times: ", enc_times)
 
 
         # attach cond flag
@@ -98,9 +99,7 @@ def run_ms(
 
         if not counter_fact:
             # rand X,Y from X_dict/Y_dict for seeds
-            print("X_dict len:", len(X_dict))
             j = np.random.choice(len(X_dict))
-            print("j", j)
 
             X_j = X_dict["X_{0}".format(j)]
             Y_j = Y_dict["Y_{0}".format(j)]
@@ -146,7 +145,6 @@ def run_ms(
                     slience_recall(t_relative, in_2nd_part,
                                    slience_recall_time, agent)
                 # whether to encode
-
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
                 torch_X_mn = torch.from_numpy(X_mn[t])
@@ -203,7 +201,7 @@ def run_ms(
                                    slience_recall_time, agent)
 
                 # whether to encode
-                set_encoding_flag(t, enc_times, cond_i, agent)
+                set_encoding_flag(t, enc_times, 'NM', agent)
 
                 # forward (CHANGE: might need torch conversion)
                 torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
@@ -231,7 +229,7 @@ def run_ms(
 
                 # add in case for t=k, for first seed, but also sims_data
                 # whether to encode
-                set_encoding_flag(t, enc_times, cond_i, agent)
+                set_encoding_flag(t, enc_times, 'NM', agent)
 
                 # forward (CHANGE: might need torch conversion)
                 torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
@@ -273,7 +271,7 @@ def run_ms(
                     slience_recall(t_relative, in_2nd_part,
                                    slience_recall_time, agent)
                 # whether to encode
-                set_encoding_flag(t, enc_times, cond_i, agent)
+                set_encoding_flag(t, enc_times, 'NM', agent)
 
                 torch_x_i_t = torch.from_numpy(X_i_t)
                 # forward
@@ -342,16 +340,8 @@ def run_ms(
     #    print("example num", i)
 
 
-        '''for prm in agent.parameters():
-            #print(prm)
-            if prm.requires_grad==True:
-                print("name:", prm.name)
-                print("data:", prm.data)'''
-
-        print("agent hpc req grad: ", agent.hpc.requires_grad_ )
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
-            print("loss", loss)
             optimizer.zero_grad()
             #loss = Variable(loss, requires_grad = True)
             loss.backward()
@@ -373,15 +363,12 @@ def run_ms(
         av_a_t[i] = np.mean(log_a_t)
 
     # return cache
-    print("av_reward: ", np.mean(av_reward))
-    print("av_a_t: ", np.mean(av_a_t))
     log_dist_a = np.array(log_dist_a)
     log_targ_a = np.array(log_targ_a)
     results = [log_dist_a, log_targ_a, log_cache, log_cond]
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
                log_return, log_pi_ent]
     out = [results, metrics]
-    print("log_dist_a shape: ", np.shape(log_dist_a))
     if get_data:
         #X_array_list = log_X
         #sim_lenths = log_sim_lengths
