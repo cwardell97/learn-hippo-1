@@ -32,7 +32,7 @@ parser.add_argument('--penalty', default=.1, type=int)
 parser.add_argument('--penalty_random', default=1, type=int)
 parser.add_argument('--penalty_discrete', default=1, type=int)
 parser.add_argument('--penalty_onehot', default=0, type=int)
-parser.add_argument('--normalize_return', default=0, type=int) #set to zero --> raw reward/penalty 
+parser.add_argument('--normalize_return', default=1, type=int) #set to zero --> raw reward/penalty 
 parser.add_argument('--attach_cond', default=0, type=int)
 parser.add_argument('--p_rm_ob_enc', default=0.3, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)

@@ -117,7 +117,7 @@ def compute_returns(rewards, gamma=0, normalize=False):
     return returns
 
 
-def compute_a2c_loss(probs, values, returns, use_V=True):
+def compute_a2c_loss(probs, values, returns, use_V=False):
     """compute the objective node for policy/value networks
 
     Parameters
