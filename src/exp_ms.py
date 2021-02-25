@@ -19,7 +19,7 @@ def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
         learning=True, get_cache=True, get_data=True,
-        counter_fact=False, seed_num=2, mem_num=2
+        counter_fact=True, seed_num=2, mem_num=2
 ):
 
     # load training data
