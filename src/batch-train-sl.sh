@@ -27,7 +27,7 @@ normalize_return=1 # never changed
 for subj_id in 1
 do
     for penalty in 4
-    do0
+    do
         for n_param in 16
         do
             for enc_size in 16
