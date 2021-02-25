@@ -39,9 +39,9 @@ def get_reward(a_t, y_t, penalty, allow_dk=True):
     if a_t == dk_id and allow_dk:
         r_t = 0
     elif a_t_targ == a_t:
-        r_t = 0
+        r_t = 1
     else:
-        r_t = 0
+        r_t = -1
     return torch.from_numpy(np.array(r_t)).type(torch.FloatTensor).data
     # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
