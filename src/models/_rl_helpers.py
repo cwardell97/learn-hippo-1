@@ -39,9 +39,9 @@ def get_reward(a_t, y_t, penalty, allow_dk=True):
     if a_t == dk_id and allow_dk:
         r_t = 0
     elif a_t_targ == a_t:
-        r_t = .1
+        r_t = 0
     else:
-        r_t = - penalty
+        r_t = 0
     return torch.from_numpy(np.array(r_t)).type(torch.FloatTensor).data
     # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
@@ -117,7 +117,7 @@ def compute_returns(rewards, gamma=0, normalize=False):
     return returns
 
 
-def compute_a2c_loss(probs, values, returns, use_V=True):
+def compute_a2c_loss(probs, values, returns, use_V=False):
     """compute the objective node for policy/value networks
 
     Parameters
