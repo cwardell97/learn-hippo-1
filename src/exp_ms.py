@@ -130,6 +130,7 @@ def run_ms(
             # load X,Y for specific events
             X_mn = X_dict["X_{0}".format(mn)]
             Y_mn = Y_dict["Y_{0}".format(mn)]
+            print("X_mn dims: ", np.shape(X_mn))
             for t in range(T_part):
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
@@ -276,6 +277,7 @@ def run_ms(
                 torch_x_i_t = torch.from_numpy(X_i_t)
                 # forward
                 x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor), [penalty_rep])
+
                 pi_a_t, v_t, hc_t, cache_t = agent.forward(
                     x_it.view(1, 1, -1), hc_t)
                 # after delay period, compute loss
@@ -288,6 +290,7 @@ def run_ms(
 
                 # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
                 # print("yshape: ", seed_dictY["seed_Y{0}".format(0)].shape)DELETE
+                #print("X_i_t dims: ", np.shape(X_i_t))
                 X_i_t = io_convert(a_t, t, p.env.n_param,
                 seed_dictY["seed_Y{0}".format(0)].shape[0]
                 )
