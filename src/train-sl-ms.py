@@ -150,7 +150,7 @@ fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
 
-'''
+
 # hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -158,6 +158,7 @@ train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-m
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
+'''
 
 
 
@@ -199,11 +200,18 @@ Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
+# simulation lengths
 av_sims_lengs = np.zeros(n_epoch)
 all_sims_lengs = np.zeros((n_epoch, n_examples))
 av_epoch_reward = np.zeros(n_epoch)
 av_epoch_ep_reward = np.zeros(n_epoch)
 av_epoch_ms_reward = np.zeros(n_epoch)
+# sim composition
+av_mem1_matches_e = np.zeros(n_epoch)
+av_mem2_matches_e = np.zeros(n_epoch)
+av_no_matches_e = np.zeros(n_epoch)
+av_step_num_e = np.zeros(n_epoch)
+
 
 k = 2
 epoch_id = 0
@@ -214,7 +222,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
     [results, metrics, sims_data,
-    reward_data] = run_ms(
+    reward_data, sim_origins] = run_ms(
         agent, optimizer,
         task, p, n_examples, tpath,
         fix_penalty=penalty,
@@ -228,6 +236,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     [av_sims_data, all_sims_data] = sims_data
     [av_reward, av_ep_reward]= reward_data
+    [av_mem1_matches,av_mem2_matches,av_no_matches, av_step_num] = sim_origins
 
     # assign to logs
     av_sims_lengs[epoch_id] = av_sims_data
@@ -235,6 +244,13 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     av_epoch_reward[epoch_id] = av_reward
     av_epoch_ep_reward[epoch_id] = av_ep_reward
     av_epoch_ms_reward[epoch_id] = av_reward - av_ep_reward
+
+    # save sim lengths
+    av_mem1_matches_e[epoch_id] = av_mem1_matches
+    av_mem2_matches_e[epoch_id] = av_mem2_matches
+    av_no_matches_e[epoch_id] = av_no_matches
+    av_step_num_e[epoch_id] = av_step_num
+
     print("epoch ", epoch_id, " all sim length: ", all_sims_lengs[epoch_id])
 
 
@@ -283,18 +299,33 @@ axes2.axhline(0, color='grey', linestyle='--')
 axes2.set_xlabel('trial')
 
 f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
+axes3.plot(np.divide(av_mem1_matches_e,av_step_num_e), label = 'origin: memory 1')
+axes3.plot(np.divide(av_mem2_matches_e,av_step_num_e), label = 'origin: memory 2')
+axes3.plot(np.divide(av_no_matches_e,av_step_num_e), label = 'origin: NA')
+axes3.plot(np.divide(av_step_num_e,av_step_num_e),label = 'total')
+
+axes3.set_ylabel('% of total instances per epoch')
+axes3.axhline(0, color='grey', linestyle='--')
+axes3.set_xlabel('epoch')
+axes3.legend()
+
+f4, axes4 = plt.subplots(figsize=(10, 9)) #, sharex=True) #RETURN HERE
 axes3.plot(range(n_examples), all_sims_lengs[n_epoch-1,:])
 axes3.set_ylabel('sim length')
 axes3.axhline(0, color='grey', linestyle='--')
 axes3.set_xlabel('trial')
 
+
+
 fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 fig2_path = os.path.join(log_subpath['figs'], 'first_epoch_sims.png')
 fig3_path = os.path.join(log_subpath['figs'], 'last_epoch_sims.png')
+fig4_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
 
 f.savefig(fig1_path, dpi=100, bbox_to_anchor='tight')
 f2.savefig(fig2_path, dpi=100, bbox_to_anchor='tight')
 f3.savefig(fig3_path, dpi=100, bbox_to_anchor='tight')
+f4.savefig(fig3_path, dpi=100, bbox_to_anchor='tight')
 
 
 

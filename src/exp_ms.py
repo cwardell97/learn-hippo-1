@@ -39,11 +39,22 @@ def run_ms(
     av_a_t = np.zeros(n_examples)
     av_reward = np.zeros(n_examples)
     av_ep_reward = np.zeros(n_examples)
+    av_mem1_matches = np.zeros(n_examples)
+    av_mem2_matches = np.zeros(n_examples)
+    av_no_matches = np.zeros(n_examples)
+    av_step_num = np.zeros(n_examples)
 
     # note that first and second half of x is redudant, only need to show half
     for i in range(n_examples):
+        # init logs
         log_a_t = []
         ep_rewards = []
+        mem1_matches = []
+        mem2_matches = []
+        no_matches = []
+        step_num = []
+
+
         #pdb.set_trace()
         # pick a condition
         cond_i = 'DM'
@@ -122,6 +133,10 @@ def run_ms(
                 else:
                     seed_dictX["seed_X{0}".format(sn)] = X_dict["X_{0}".format(1)][pair_nums[sn]]
                     seed_dictY["seed_Y{0}".format(sn)] = Y_dict["Y_{0}".format(1)][pair_nums[sn]]
+
+        # set var to save length of output for a timestep
+        out_leng = np.add(p.env.n_param,
+        seed_dictY["seed_Y{0}".format(0)].shape[0])
 
 
         ''' Load em with 'mem_num' events'''
@@ -252,15 +267,29 @@ def run_ms(
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 log_a_t.append(a_t)
-                # convert model prediction to input for next timesteps
-                #print("n_param: ", p.env.n_param)
 
+                # convert model prediction to input for next timesteps
                 X_i_t = io_convert(a_t, t, p.env.n_param,
                 seed_dictY["seed_Y{0}".format(0)].shape[0]
                 )
                 # if don't know, break
                 if seed_dictY["seed_Y{0}".format(0)].shape[0] == a_t:
                     break
+
+                else:
+                    # save memories
+                    memory1 = X_dict["X_{0}".format(0)]
+                    memory2 = X_dict["X_{0}".format(1)]
+
+                    # compute origin of model output
+                    m1_matches, m2_matches, n_matches = compare_output(X_i_t,
+                    memory1, memory2, out_leng)
+                    # save results
+                    mem1_matches.append(m1_matches)
+                    mem2_matches.append(m2_matches)
+                    no_matches.append(n_matches)
+                    step_num.append(1)
+
 
             else:
                 # now just predict for rest, once k<t
@@ -325,6 +354,22 @@ def run_ms(
                     #    log_targ_a[i].append(0)
                     print("breaking on: ", t)
                     break
+
+                # if not don't know, save origin of output
+                else:
+                    # save memories
+                    memory1 = X_dict["X_{0}".format(0)]
+                    memory2 = X_dict["X_{0}".format(1)]
+
+                    # compute origin of model output
+                    m1_matches, m2_matches, n_matches = compare_output(X_i_t,
+                    memory1, memory2, out_leng)
+                    # save results
+                    mem1_matches.append(m1_matches)
+                    mem2_matches.append(m2_matches)
+                    no_matches.append(n_matches)
+                    step_num.append(1)
+
         # log sim length after t loop
         log_sim_lengths[i] = t
 
@@ -361,9 +406,15 @@ def run_ms(
         if get_cache:
             log_cache[i] = log_cache_i
 
+        # cache averages across example
         av_reward[i] = np.mean(rewards)
         av_ep_reward[i] = np.mean(ep_rewards)
         av_a_t[i] = np.mean(log_a_t)
+        av_mem1_matches[i] = np.mean(mem1_matches)
+        av_mem2_matches[i] = np.mean(mem2_matches)
+        av_no_matches[i] = np.mean(no_matches)
+        av_step_num[i] = np.mean(step_num)
+
 
     # return cache
     log_dist_a = np.array(log_dist_a)
@@ -381,6 +432,12 @@ def run_ms(
         out.append(sims_data)
     reward_data = [np.mean(av_reward), np.mean(av_ep_reward)]
     out.append(reward_data)
+
+    # add in sim origin data
+    sim_origins = [np.mean(av_mem1_matches),np.mean(av_mem2_matches),
+    np.mean(av_no_matches), np.mean(av_step_num)]
+    out.append(sim_origins)
+
     return out
 
 
@@ -511,3 +568,36 @@ def io_convert(a_t, t, T, A):
     else:
         obs_val_oh_vec = np.identity(A)[a_t]
     return np.concatenate([time_oh_vec,obs_val_oh_vec, time_oh_vec])
+
+
+def compare_output(X_i_t, memory1, memory2, out_leng):
+    '''compare output to events in em
+    returns 1 for mem1, 2 for mem 2, 0 for no mem
+    '''
+    # init counters
+    mem1_matches = []
+    mem2_matches = []
+    no_matches = []
+    rag = np.int((np.shape(memory1)[0])/2)
+    # trim model output
+    output = X_i_t[:out_leng,]
+
+    # loop through all time steps of each row
+    for row in range(rag):
+        # pull 1 row for each mem
+        memstep1 = memory1[row,:]
+        memstep2 = memory2[row,:]
+        memstep_short_1 = memstep1[:out_leng,]
+        memstep_short_2 = memstep2[:out_leng,]
+
+        if np.all(memstep1 == output):
+            mem1_matches.append(1)
+
+        if np.all(memstep2 == output):
+            mem2_matches.append(1)
+
+        if not np.all(memstep2 == output) and not np.all(memstep1 == output):
+            no_matches.append(1)
+
+    out = [mem1_matches, mem2_matches, no_matches]
+    return out
