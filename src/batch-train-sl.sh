@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-v2.3_ev-p1_r1--ms-p10_r10-CF-REAL'
+exp_name='Mental-Sims-v2.4_ev-p1_r1--ms-p10_r10-CF'
 n_epoch=100
 n_branch=4
 
