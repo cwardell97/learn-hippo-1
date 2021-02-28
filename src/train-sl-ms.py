@@ -101,8 +101,6 @@ p = P(
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
     lr=learning_rate, eta=eta, cmpt=cmpt,
 )
-print(p.env.def_tps)
-print("p.net.eta", p.net.eta)
 
 # init env
 task = SequenceLearning(
@@ -166,7 +164,6 @@ train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/train
 # load model
 agent, optimizer = load_ckpt(
     epoch_load, train_logsubpath['ckpts'], agent)
-print(optimizer)
 optimizer= torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 
 # init scheduler REMOVE comment
@@ -217,7 +214,6 @@ k = 2
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
-    print("epoch_id", epoch_id)
 
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
@@ -251,7 +247,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     av_no_matches_e[epoch_id] = av_no_matches
     av_step_num_e[epoch_id] = av_step_num
 
-    print("epoch ", epoch_id, " all sim length: ", all_sims_lengs[epoch_id])
+    print("epoch ", epoch_id, " av_mem1_matches_e: ", av_mem1_matches_e[epoch_id])
+    print("epoch ", epoch_id, "av_step_num_e: ", av_step_num_e[epoch_id])
 
 
     #update lr scheduler
@@ -299,13 +296,12 @@ axes2.axhline(0, color='grey', linestyle='--')
 axes2.set_xlabel('trial')
 
 f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
-axes3.plot(np.divide(av_mem1_matches_e,av_step_num_e), label = 'origin: memory 1')
-axes3.plot(np.divide(av_mem2_matches_e,av_step_num_e), label = 'origin: memory 2')
-axes3.plot(np.divide(av_no_matches_e,av_step_num_e), label = 'origin: NA')
-axes3.plot(np.divide(av_step_num_e,av_step_num_e),label = 'total')
+axes3.plot(av_mem1_matches_e, label = 'origin: memory 1')
+axes3.plot(av_mem2_matches_e, label = 'origin: memory 2')
+axes3.plot(av_no_matches_e, label = 'origin: NA')
+axes3.plot(av_step_num_e,label = 'total')
 
 axes3.set_ylabel('% of total instances per epoch')
-axes3.axhline(0, color='grey', linestyle='--')
 axes3.set_xlabel('epoch')
 axes3.legend()
 
@@ -325,7 +321,7 @@ fig4_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
 f.savefig(fig1_path, dpi=100, bbox_to_anchor='tight')
 f2.savefig(fig2_path, dpi=100, bbox_to_anchor='tight')
 f3.savefig(fig3_path, dpi=100, bbox_to_anchor='tight')
-f4.savefig(fig3_path, dpi=100, bbox_to_anchor='tight')
+f4.savefig(fig4_path, dpi=100, bbox_to_anchor='tight')
 
 
 
