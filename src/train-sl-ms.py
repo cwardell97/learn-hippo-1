@@ -46,7 +46,7 @@ parser.add_argument('--cmpt', default=0.8, type=float)
 parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=5, type=int)
-parser.add_argument('--n_examples', default=256, type=int)
+parser.add_argument('--n_examples', default=10, type=int) #256
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -148,7 +148,7 @@ fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
 
-'''
+
 # hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -156,7 +156,7 @@ train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-m
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
-
+'''
 
 
 
@@ -232,7 +232,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     [av_sims_data, all_sims_data] = sims_data
     [av_reward, av_ep_reward]= reward_data
-    [av_mem1_matches,av_mem2_matches,av_no_matches, av_step_num] = sim_origins
+    [av_mem1_matches,av_mem2_matches,av_no_matches] = sim_origins
 
     # assign to logs
     av_sims_lengs[epoch_id] = av_sims_data
@@ -242,13 +242,15 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     av_epoch_ms_reward[epoch_id] = av_reward - av_ep_reward
 
     # save sim lengths
+    #print("av_mem1_matches: ", av_mem1_matches)
+    #print("av_mem2_matches: ", av_mem2_matches)
+    #print("av_no_matches: ", av_no_matches)
     av_mem1_matches_e[epoch_id] = av_mem1_matches
     av_mem2_matches_e[epoch_id] = av_mem2_matches
     av_no_matches_e[epoch_id] = av_no_matches
-    av_step_num_e[epoch_id] = av_step_num
 
-    print("epoch ", epoch_id, " av_mem1_matches_e: ", av_mem1_matches_e[epoch_id])
-    print("epoch ", epoch_id, "av_step_num_e: ", av_step_num_e[epoch_id])
+    print("epoch ", epoch_id, " av_mem1_matches_e: ",
+          av_mem1_matches_e[epoch_id])
 
 
     #update lr scheduler
@@ -299,17 +301,16 @@ f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
 axes3.plot(av_mem1_matches_e, label = 'origin: memory 1')
 axes3.plot(av_mem2_matches_e, label = 'origin: memory 2')
 axes3.plot(av_no_matches_e, label = 'origin: NA')
-axes3.plot(av_step_num_e,label = 'total')
 
 axes3.set_ylabel('% of total instances per epoch')
 axes3.set_xlabel('epoch')
 axes3.legend()
 
-f4, axes4 = plt.subplots(figsize=(10, 9)) #, sharex=True) #RETURN HERE
-axes3.plot(range(n_examples), all_sims_lengs[n_epoch-1,:])
-axes3.set_ylabel('sim length')
-axes3.axhline(0, color='grey', linestyle='--')
-axes3.set_xlabel('trial')
+f4, axes4 = plt.subplots(figsize=(10, 9)) #, sharex=True)
+axes4.plot(range(n_examples), all_sims_lengs[n_epoch-1,:])
+axes4.set_ylabel('sim length')
+axes4.axhline(0, color='grey', linestyle='--')
+axes4.set_xlabel('trial')
 
 
 

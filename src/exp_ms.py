@@ -35,14 +35,17 @@ def run_ms(
     log_targ_a = [[] for _ in range(n_examples)]
     log_cache = [None] * n_examples
     log_X = []
+    # sim lengths
     log_sim_lengths = np.zeros(n_examples)
+    # reward stuff
     av_a_t = np.zeros(n_examples)
     av_reward = np.zeros(n_examples)
     av_ep_reward = np.zeros(n_examples)
-    av_mem1_matches = np.zeros(n_examples)
-    av_mem2_matches = np.zeros(n_examples)
-    av_no_matches = np.zeros(n_examples)
-    av_step_num = np.zeros(n_examples)
+    # sim origins
+    mem1_matches_ratio = np.zeros(n_examples)
+    mem2_matches_ratio = np.zeros(n_examples)
+    no_matches_ratio = np.zeros(n_examples)
+    step_num_ratio = np.zeros(n_examples)
 
     # note that first and second half of x is redudant, only need to show half
     for i in range(n_examples):
@@ -55,7 +58,6 @@ def run_ms(
         step_num = []
 
 
-        #pdb.set_trace()
         # pick a condition
         cond_i = 'DM'
         # cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
@@ -78,7 +80,7 @@ def run_ms(
         T_total = np.shape(X_dict["X_{0}".format(1)])[0]
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
-        print("enc_times: ", enc_times)
+
 
 
         # attach cond flag
@@ -145,7 +147,7 @@ def run_ms(
             # load X,Y for specific events
             X_mn = X_dict["X_{0}".format(mn)]
             Y_mn = Y_dict["Y_{0}".format(mn)]
-            print("X_mn dims: ", np.shape(X_mn))
+            #print("X_mn dims: ", np.shape(X_mn))
             for t in range(T_part):
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
@@ -282,12 +284,12 @@ def run_ms(
                     memory2 = X_dict["X_{0}".format(1)]
 
                     # compute origin of model output
-                    m1_matches, m2_matches, n_matches = compare_output(X_i_t,
+                    m1_match, m2_match, n_match = compare_output(X_i_t,
                     memory1, memory2, out_leng)
                     # save results
-                    mem1_matches.append(m1_matches)
-                    mem2_matches.append(m2_matches)
-                    no_matches.append(n_matches)
+                    mem1_matches.append(m1_match)
+                    mem2_matches.append(m2_match)
+                    no_matches.append(n_match)
                     step_num.append(1)
 
 
@@ -354,27 +356,27 @@ def run_ms(
                     #    log_targ_a[i].append(0)
                     print("breaking on: ", t)
                     break
-
                 # if not don't know, save origin of output
                 else:
                     # save memories
+                    #pdb.set_trace()
                     memory1 = X_dict["X_{0}".format(0)]
                     memory2 = X_dict["X_{0}".format(1)]
 
                     # compute origin of model output
-                    m1_matches, m2_matches, n_matches = compare_output(X_i_t,
+                    m1_match, m2_match, n_match = compare_output(X_i_t,
                     memory1, memory2, out_leng)
                     # save results
-                    mem1_matches.append(m1_matches)
-                    mem2_matches.append(m2_matches)
-                    no_matches.append(n_matches)
+                    mem1_matches.append(m1_match)
+                    mem2_matches.append(m2_match)
+                    no_matches.append(n_match)
                     step_num.append(1)
+                    #print("m1 matches:", m1_matches)
+                    #print("m2 matches:", m2_matches)
+                    #print("no matches: ", no_matches)
 
         # log sim length after t loop
         log_sim_lengths[i] = t
-
-
-
 
 
         # compute RL loss (just merge these together from two tasks)
@@ -410,11 +412,19 @@ def run_ms(
         av_reward[i] = np.mean(rewards)
         av_ep_reward[i] = np.mean(ep_rewards)
         av_a_t[i] = np.mean(log_a_t)
-        av_mem1_matches[i] = np.mean(mem1_matches)
-        av_mem2_matches[i] = np.mean(mem2_matches)
-        av_no_matches[i] = np.mean(no_matches)
-        av_step_num[i] = np.mean(step_num)
+        # output origins
+        step_num_ratio[i] = np.sum(np.sum(step_num))
+        mem1_matches_ratio[i] = np.divide(np.sum(np.sum(mem1_matches)),
+                                          step_num_ratio[i])
+        mem2_matches_ratio[i] = np.divide(np.sum(np.sum(mem2_matches)),
+                                          step_num_ratio[i])
+        no_matches_ratio[i] = np.divide(np.sum(np.sum(no_matches)),
+                                        step_num_ratio[i])
 
+        print("step_num:", step_num_ratio[i])
+        print("No matches:", no_matches_ratio[i])
+        print("mem1_matches:", mem1_matches_ratio[i])
+        print("mem2_matches:", mem2_matches_ratio[i])
 
     # return cache
     log_dist_a = np.array(log_dist_a)
@@ -423,19 +433,21 @@ def run_ms(
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
                log_return, log_pi_ent]
     out = [results, metrics]
-    if get_data:
-        #X_array_list = log_X
-        #sim_lenths = log_sim_lengths
-        av_sims_data = np.mean(log_sim_lengths)
-        all_sims_data = log_sim_lengths
-        sims_data = [av_sims_data,all_sims_data]
-        out.append(sims_data)
+
+    # add in simulation length data
+    av_sims_data = np.mean(log_sim_lengths)
+    all_sims_data = log_sim_lengths
+    sims_data = [av_sims_data,all_sims_data]
+    out.append(sims_data)
+
+    # add reward data
     reward_data = [np.mean(av_reward), np.mean(av_ep_reward)]
     out.append(reward_data)
 
     # add in sim origin data
-    sim_origins = [np.mean(av_mem1_matches),np.mean(av_mem2_matches),
-    np.mean(av_no_matches), np.mean(av_step_num)]
+    sim_origins = [np.mean(mem1_matches_ratio),
+                   np.mean(mem2_matches_ratio),
+                   np.mean(no_matches_ratio)]
     out.append(sim_origins)
 
     return out
@@ -582,6 +594,7 @@ def compare_output(X_i_t, memory1, memory2, out_leng):
     # trim model output
     output = X_i_t[:out_leng,]
 
+    no_match = 0
     # loop through all time steps of each row
     for row in range(rag):
         # pull 1 row for each mem
@@ -590,14 +603,16 @@ def compare_output(X_i_t, memory1, memory2, out_leng):
         memstep_short_1 = memstep1[:out_leng,]
         memstep_short_2 = memstep2[:out_leng,]
 
-        if np.all(memstep1 == output):
+        if np.all(memstep_short_1 == output):
             mem1_matches.append(1)
+            no_match = 1
 
-        if np.all(memstep2 == output):
+        if np.all(memstep_short_2 == output):
             mem2_matches.append(1)
+            no_match = 1
 
-        if not np.all(memstep2 == output) and not np.all(memstep1 == output):
-            no_matches.append(1)
+    if no_match == 0:
+        no_matches.append(1)
 
     out = [mem1_matches, mem2_matches, no_matches]
     return out
