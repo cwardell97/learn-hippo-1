@@ -76,9 +76,9 @@ def get_reward_ms(a_t, y_t, penalty):
         a_t_targ = torch.argmax(torch.from_numpy(y_t))
     # compare action vs. target action
     if a_t == dk_id:
-        r_t =  - 5
+        r_t =  - penalty
     else:
-        r_t = 5
+        r_t = penalty
     return torch.from_numpy(np.array(r_t)).type(torch.FloatTensor).data
     # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
