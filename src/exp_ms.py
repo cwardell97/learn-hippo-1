@@ -9,7 +9,7 @@ from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
-from models import compute_returns, compute_a2c_loss, get_reward_ms, get_reward
+from models import compute_returns, compute_a2c_loss, get_reward_ms
 from utils.io import pickle_load_dict
 #from torchsummary import summary
 
@@ -46,9 +46,11 @@ def run_ms(
     mem2_matches_ratio = np.zeros(n_examples)
     no_matches_ratio = np.zeros(n_examples)
     step_num_ratio = np.zeros(n_examples)
+    both_match_ratio = np.zeros(n_examples)
 
     # note that first and second half of x is redudant, only need to show half
     for i in range(n_examples):
+        print(i, "in ", n_examples)
         # init logs
         log_a_t = []
         ep_rewards = []
@@ -56,6 +58,7 @@ def run_ms(
         mem2_matches = []
         no_matches = []
         step_num = []
+        both_matches = []
 
 
         # pick a condition
@@ -173,7 +176,7 @@ def run_ms(
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward
-
+                ''' REMOVE
                 r_t = get_reward(a_t, Y_mn[t], penalty_val)
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
@@ -181,24 +184,14 @@ def run_ms(
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 ep_rewards.append(r_t)
+                '''
 
-
-                #update WM/EM bsaed on the condition (flushing WM / retrieve during part 2)
-                hc_t = cond_manipulation(
-                    cond_i, t, event_ends[0], hc_t, agent)
-
-                # cache results for later analysis REMOVE
-                if get_cache:
-                    log_cache_i[t] = cache_t
-                # for behavioral stuff, only record prediction time steps DELETE
-                '''if t % T_part >= pad_len:
-                    log_dist_a[i].append(to_sqnp(pi_a_t))
-                    log_targ_a[i].append(to_sqnp(Y_i[t]))'''
-
-
+        if i ==5:
+            pdb.set_trace()
         '''seed simulation, then predict'''
         for t in range(T_part):
             global X_i_t
+
             # init X_i_t @t=0
             if t==0:
                 X_i_t = np.zeros(seed_dictX["seed_X{0}".format(0)].shape)
@@ -232,6 +225,7 @@ def run_ms(
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward
+                ''' REMOVE
                 r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(t)],
                 penalty_val
                 )
@@ -241,10 +235,9 @@ def run_ms(
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 log_a_t.append(a_t)
-                ep_rewards.append(r_t)
+                ep_rewards.append(r_t) '''
 
             elif (seed_num-1)==t:
-
                 # add in case for t=k, for first seed, but also sims_data
                 # whether to encode
                 set_encoding_flag(t, enc_times, 'NM', agent)
@@ -263,6 +256,10 @@ def run_ms(
                 r_t = get_reward_ms(a_t, seed_dictY["seed_Y{0}".format(0)],
                 penalty_val
                 )
+                print("t at stage 2: ", t)
+                print("r_t: ", r_t.item())
+                print("a_t: ", a_t.item())
+                print("p_a_t: ", p_a_t.item())
 
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
@@ -284,12 +281,13 @@ def run_ms(
                     memory2 = X_dict["X_{0}".format(1)]
 
                     # compute origin of model output
-                    m1_match, m2_match, n_match = compare_output(X_i_t,
+                    m1_match, m2_match, n_match, b_match = compare_output(X_i_t,
                     memory1, memory2, out_leng)
                     # save results
                     mem1_matches.append(m1_match)
                     mem2_matches.append(m2_match)
                     no_matches.append(n_match)
+                    both_matches.append(b_match)
                     step_num.append(1)
 
 
@@ -359,29 +357,30 @@ def run_ms(
                 # if not don't know, save origin of output
                 else:
                     # save memories
-                    #pdb.set_trace()
                     memory1 = X_dict["X_{0}".format(0)]
                     memory2 = X_dict["X_{0}".format(1)]
 
                     # compute origin of model output
-                    m1_match, m2_match, n_match = compare_output(X_i_t,
+                    m1_match, m2_match, n_match, b_match = compare_output(X_i_t,
                     memory1, memory2, out_leng)
                     # save results
                     mem1_matches.append(m1_match)
                     mem2_matches.append(m2_match)
                     no_matches.append(n_match)
                     step_num.append(1)
+                    both_matches.append(b_match)
                     #print("m1 matches:", m1_matches)
                     #print("m2 matches:", m2_matches)
                     #print("no matches: ", no_matches)
 
         # log sim length after t loop
         log_sim_lengths[i] = t
+        print('last t: ', t)
 
 
         # compute RL loss (just merge these together from two tasks)
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
-        #print("rewards:", rewards)
+        #print("returns:", returns)
         #print("values:", values)
         #print("probs:", probs)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
@@ -420,11 +419,14 @@ def run_ms(
                                           step_num_ratio[i])
         no_matches_ratio[i] = np.divide(np.sum(np.sum(no_matches)),
                                         step_num_ratio[i])
+        both_match_ratio[i] = np.divide(np.sum(np.sum(both_matches)),
+                                        step_num_ratio[i])
 
         print("step_num:", step_num_ratio[i])
         print("No matches:", no_matches_ratio[i])
         print("mem1_matches:", mem1_matches_ratio[i])
         print("mem2_matches:", mem2_matches_ratio[i])
+        print("both_matches:", both_match_ratio[i])
 
     # return cache
     log_dist_a = np.array(log_dist_a)
@@ -447,7 +449,8 @@ def run_ms(
     # add in sim origin data
     sim_origins = [np.mean(mem1_matches_ratio),
                    np.mean(mem2_matches_ratio),
-                   np.mean(no_matches_ratio)]
+                   np.mean(no_matches_ratio),
+                   np.mean(both_match_ratio)]
     out.append(sim_origins)
 
     return out
@@ -590,6 +593,7 @@ def compare_output(X_i_t, memory1, memory2, out_leng):
     mem1_matches = []
     mem2_matches = []
     no_matches = []
+    both_match = []
     rag = np.int((np.shape(memory1)[0])/2)
     # trim model output
     output = X_i_t[:out_leng,]
@@ -611,8 +615,11 @@ def compare_output(X_i_t, memory1, memory2, out_leng):
             mem2_matches.append(1)
             no_match = 1
 
+        if np.all(memstep_short_2 == output) and np.all(memstep_short_1 == output):
+            both_match.append(1)
+
     if no_match == 0:
         no_matches.append(1)
 
-    out = [mem1_matches, mem2_matches, no_matches]
+    out = [mem1_matches, mem2_matches, no_matches, both_match]
     return out

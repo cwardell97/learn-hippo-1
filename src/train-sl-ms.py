@@ -208,12 +208,14 @@ av_mem1_matches_e = np.zeros(n_epoch)
 av_mem2_matches_e = np.zeros(n_epoch)
 av_no_matches_e = np.zeros(n_epoch)
 av_step_num_e = np.zeros(n_epoch)
+av_both_matches_e = np.zeros(n_epoch)
 
 
 k = 2
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
+    print("epoch: ", epoch_id)
 
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
@@ -232,7 +234,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     [av_sims_data, all_sims_data] = sims_data
     [av_reward, av_ep_reward]= reward_data
-    [av_mem1_matches,av_mem2_matches,av_no_matches] = sim_origins
+    [av_mem1_matches,av_mem2_matches,
+    av_no_matches, av_both_matches] = sim_origins
 
     # assign to logs
     av_sims_lengs[epoch_id] = av_sims_data
@@ -248,10 +251,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     av_mem1_matches_e[epoch_id] = av_mem1_matches
     av_mem2_matches_e[epoch_id] = av_mem2_matches
     av_no_matches_e[epoch_id] = av_no_matches
-
-    print("epoch ", epoch_id, " av_mem1_matches_e: ",
-          av_mem1_matches_e[epoch_id])
-
+    av_both_matches_e[epoch_id] = av_both_matches
 
     #update lr scheduler
     neg_pol_score = (n_param - av_sims_lengs[epoch_id])/n_param
@@ -291,6 +291,7 @@ ax2.plot(av_epoch_ms_reward, color = 'orange', label = 'm.s. reward')
 ax2.set_ylabel("average reward")
 ax2.legend()
 
+
 f2, axes2 = plt.subplots(figsize=(10, 9)) #, sharex=True)
 axes2.plot(range(n_examples), all_sims_lengs[1,:])
 axes2.set_ylabel('sim length')
@@ -300,6 +301,7 @@ axes2.set_xlabel('trial')
 f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
 axes3.plot(av_mem1_matches_e, label = 'origin: memory 1')
 axes3.plot(av_mem2_matches_e, label = 'origin: memory 2')
+axes3.plot(av_both_matches_e, label = 'origin: both memories')
 axes3.plot(av_no_matches_e, label = 'origin: NA')
 
 axes3.set_ylabel('% of total instances per epoch')

@@ -41,12 +41,12 @@ def get_reward(a_t, y_t, penalty, allow_dk=True):
     elif a_t_targ == a_t:
         r_t = 1
     else:
-        r_t = -1
+        r_t = - penalty
     return torch.from_numpy(np.array(r_t)).type(torch.FloatTensor).data
     # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
 
-def get_reward_ms(a_t, y_t, penalty, allow_dk=True):
+def get_reward_ms(a_t, y_t, penalty):
     """define the reward function at time t for exp_ms
     High level function
     ----------
@@ -60,8 +60,6 @@ def get_reward_ms(a_t, y_t, penalty, allow_dk=True):
         target action
     penalty : int
         the penalty magnitude of making incorrect state prediction
-    allow_dk : bool
-        if True, then activating don't know makes r_t = 0, regardless of a_t
 
     Returns
     -------
@@ -77,7 +75,7 @@ def get_reward_ms(a_t, y_t, penalty, allow_dk=True):
     else:
         a_t_targ = torch.argmax(torch.from_numpy(y_t))
     # compare action vs. target action
-    if a_t == dk_id and allow_dk:
+    if a_t == dk_id:
         r_t =  - 5
     else:
         r_t = 5
