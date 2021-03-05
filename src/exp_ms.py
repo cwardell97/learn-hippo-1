@@ -186,8 +186,8 @@ def run_ms(
                 ep_rewards.append(r_t)
                 '''
 
-        if i ==5:
-            pdb.set_trace()
+        #if i ==5:
+            #pdb.set_trace()
         '''seed simulation, then predict'''
         for t in range(T_part):
             global X_i_t
@@ -264,7 +264,9 @@ def run_ms(
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
                 probs.append(p_a_t)
+                values.append(v_t)
                 ents.append(entropy(pi_a_t))
+
                 log_a_t.append(a_t)
 
                 # convert model prediction to input for next timesteps
@@ -427,6 +429,8 @@ def run_ms(
         print("mem1_matches:", mem1_matches_ratio[i])
         print("mem2_matches:", mem2_matches_ratio[i])
         print("both_matches:", both_match_ratio[i])
+        print("does it sum:",
+        np.sum((no_matches_ratio[i],mem1_matches_ratio[i],mem2_matches_ratio[i])))
 
     # return cache
     log_dist_a = np.array(log_dist_a)

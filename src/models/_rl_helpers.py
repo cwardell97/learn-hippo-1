@@ -110,6 +110,7 @@ def compute_returns(rewards, gamma=0, normalize=False):
         returns.insert(0, R)
     returns = torch.tensor(returns)
     # normalize w.r.t to the statistics of this trajectory
+    print("eps:", eps)
     if normalize:
         returns = (returns - returns.mean()) / (returns.std() + eps)
     return returns
