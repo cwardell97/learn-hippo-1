@@ -254,10 +254,11 @@ def run_ms(
                 r_t = get_reward_ms(a_t, seed_dictY["seed_Y{0}".format(0)],
                 penalty_val
                 )
+                ''' value prints
                 print("t at stage 2: ", t)
                 print("r_t: ", r_t.item())
                 print("a_t: ", a_t.item())
-                print("p_a_t: ", p_a_t.item())
+                print("p_a_t: ", p_a_t.item())'''
 
                 # cache the results for later RL loss computation REMOVE
                 rewards.append(r_t)
@@ -422,7 +423,7 @@ def run_ms(
                                         step_num_ratio[i])
         both_match_ratio[i] = np.divide(np.sum(np.sum(both_matches)),
                                         step_num_ratio[i])
-
+        ''' match prints
         print("step_num:", step_num_ratio[i])
         print("No matches:", no_matches_ratio[i])
         print("mem1_matches:", mem1_matches_ratio[i])
@@ -430,7 +431,7 @@ def run_ms(
         print("both_matches:", both_match_ratio[i])
         print("does it sum:",
         np.sum((no_matches_ratio[i],mem1_matches_ratio[i],mem2_matches_ratio[i])))
-
+        '''
     # return cache
     log_dist_a = np.array(log_dist_a)
     log_targ_a = np.array(log_targ_a)
