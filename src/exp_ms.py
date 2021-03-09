@@ -97,7 +97,10 @@ def run_ms(
         # prealloc
         loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
-        log_cache_i = [None] * T_total
+        T_part = 16
+        log_cache_i = np.empty(T_part)
+        log_cache_i[:] = np.NaN
+
 
         # init model wm and em
         penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
@@ -224,18 +227,9 @@ def run_ms(
                     x_it.view(1, 1, -1), hc_t)
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
-                # get reward
-                ''' REMOVE
-                r_t = get_reward(a_t, seed_dictY["seed_Y{0}".format(t)],
-                penalty_val
-                )
-
-                # cache the results for later RL loss computation REMOVE
-                rewards.append(r_t)
-                probs.append(p_a_t)
-                ents.append(entropy(pi_a_t))
-                log_a_t.append(a_t)
-                ep_rewards.append(r_t) '''
+                # cache, important for input gate
+                if get_cache:
+                    log_cache_i[t] = cache_t
 
             elif (seed_num-1)==t:
                 # add in case for t=k, for first seed, but also sims_data
@@ -250,6 +244,10 @@ def run_ms(
 
                 pi_a_t, v_t, hc_t, cache_t = agent.forward(
                     x_it.view(1, 1, -1), hc_t)
+                # cache, important for input gate
+                if get_cache:
+                    log_cache_i[t] = cache_t
+
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward
@@ -315,9 +313,10 @@ def run_ms(
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward, use first Y_seed for DK length arg
                 r_t = get_reward_ms(a_t, seed_dictY["seed_Y{0}".format(0)], penalty_val)
-
                 torch.set_printoptions(profile="full")
-
+                # cache, important for input gate
+                if get_cache:
+                    log_cache_i[t] = cache_t
 
                 # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
                 # print("yshape: ", seed_dictY["seed_Y{0}".format(0)].shape)DELETE
