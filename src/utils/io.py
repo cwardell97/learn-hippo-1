@@ -241,3 +241,40 @@ def load_env_metadata(log_subpath):
     with open(env_data_path, 'r') as f:
         env_data = json.load(f)
     return env_data
+
+
+def build_log_path_lr(
+        subj_id, p, lr,
+        log_root=None,
+        mkdir=True,
+        verbose=True
+):
+    # create dir names
+    exp_str = f'{p.env.exp_name}'
+    graph_str = f'p-{p.env.n_param}_b-{p.env.n_branch}'
+    # if p.env.pad_len > 0 or p.env.pad_len == 'random':
+    graph_str += f'_pad-{p.env.pad_len}'
+    prob_str = 'tp-%.2f' % (p.env.def_prob)
+    penalty_str = f'lp-{p.env.penalty}'
+    obs_str = 'p_rm_ob_rcl-%.2f_enc-%.2f' % (
+        p.env.p_rm_ob_rcl, p.env.p_rm_ob_enc)
+    # net params
+    enc_str = f'enc-{p.net.enc_mode}_size-{p.net.enc_size}'
+    enc_capc_str = f'nmem-{p.n_event_remember}'
+    recall_str = f'rp-{p.net.recall_func}_metric-{p.net.kernel}'
+    network_str = f'h-{p.net.n_hidden}_hdec-{p.net.n_hidden_dec}'
+    train_str = f'lr-{lr}-eta-{p.net.eta}'
+    curic_str = f'sup_epoch-{p.misc.sup_epoch}'
+    subj_str = f'subj-{subj_id}'
+    # compute the path
+    log_path = os.path.join(
+        log_root,
+        exp_str, graph_str, prob_str, obs_str, penalty_str,
+        enc_str, enc_capc_str, recall_str, network_str, train_str, curic_str,
+        subj_str
+    )
+    log_subpath = {
+        subdir: os.path.join(log_path, subdir) for subdir in ALL_SUBDIRS
+    }
+    _make_all_dirs(log_path, log_subpath, mkdir=mkdir, verbose=verbose)
+    return log_path, log_subpath
