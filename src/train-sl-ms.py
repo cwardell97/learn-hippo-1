@@ -317,12 +317,6 @@ axes4.set_ylabel('sim length')
 axes4.axhline(0, color='grey', linestyle='--')
 axes4.set_xlabel('trial')
 
-fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
-fig2_path = os.path.join(log_subpath['figs'], 'first_epoch_sims.png')
-fig3_path = os.path.join(log_subpath['figs'], 'last_epoch_sims.png')
-fig4_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
-
-
 n_se = 1
 f5, ax = plt.subplots(2, 1, figsize=(5, 4))
 
@@ -348,18 +342,21 @@ ax[1].set_ylabel('input gate value')
 ax[1].set_xlabel('Time')
 
 sns.despine()
-f.tight_layout()
+f5.tight_layout()
 
+# create fig paths and save
+fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
+fig2_path = os.path.join(log_subpath['figs'], 'first_epoch_sims.png')
+fig3_path = os.path.join(log_subpath['figs'], 'last_epoch_sims.png')
+fig4_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
+fig5_path = os.path.join(log_subpath['figs'], 'inpt_gate.png')
 
-
-
-
-'''
 f.savefig(fig1_path, dpi=100, bbox_to_anchor='tight')
 f2.savefig(fig2_path, dpi=100, bbox_to_anchor='tight')
 f3.savefig(fig3_path, dpi=100, bbox_to_anchor='tight')
 f4.savefig(fig4_path, dpi=100, bbox_to_anchor='tight')
-'''
+f5.savefig(fig5_path, dpi=100, bbox_to_anchor='tight')
+
 
 
 
