@@ -235,16 +235,15 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     [av_sims_data, all_sims_data] = sims_data
-    [av_reward, av_ep_reward]= reward_data
+    [av_epoch_reward[epoch_id]]= reward_data
     [av_mem1_matches,av_mem2_matches,
     av_no_matches, av_both_matches] = sim_origins
 
     # assign to logs
     av_sims_lengs[epoch_id] = av_sims_data
     all_sims_lengs[epoch_id] = all_sims_data
-    av_epoch_reward[epoch_id] = av_reward
-    av_epoch_ep_reward[epoch_id] = av_ep_reward
-    av_epoch_ms_reward[epoch_id] = av_reward - av_ep_reward
+    #av_epoch_ep_reward[epoch_id] = av_ep_reward
+    #av_epoch_ms_reward[epoch_id] = av_reward - av_ep_reward
 
     # save sim lengths
     #print("av_mem1_matches: ", av_mem1_matches)
@@ -289,8 +288,8 @@ ax.set_xlabel('epoch')
 ax2 = ax.twinx()
 
 ax2.plot(av_epoch_reward, color = 'red', label = 'total reward')
-ax2.plot(av_epoch_ep_reward, color = 'green', label = 'e.p. reward')
-ax2.plot(av_epoch_ms_reward, color = 'orange', label = 'm.s. reward')
+#ax2.plot(av_epoch_ep_reward, color = 'green', label = 'e.p. reward')
+#ax2.plot(av_epoch_ms_reward, color = 'orange', label = 'm.s. reward')
 ax2.set_ylabel("average reward")
 ax2.legend()
 

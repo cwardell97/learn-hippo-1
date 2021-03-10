@@ -46,7 +46,7 @@ def run_ms(
     # reward stuff
     av_a_t = np.zeros(n_examples)
     av_reward = np.zeros(n_examples)
-    av_ep_reward = np.zeros(n_examples)
+    #av_ep_reward = np.zeros(n_examples)
     # sim origins
     mem1_matches_ratio = np.zeros(n_examples)
     mem2_matches_ratio = np.zeros(n_examples)
@@ -59,7 +59,7 @@ def run_ms(
         #print(i, "in ", n_examples)
         # init logs
         log_a_t = []
-        ep_rewards = []
+        #ep_rewards = []
         mem1_matches = []
         mem2_matches = []
         no_matches = []
@@ -415,7 +415,7 @@ def run_ms(
 
         # cache averages across example
         av_reward[i] = np.mean(rewards)
-        av_ep_reward[i] = np.mean(ep_rewards)
+        #av_ep_reward[i] = np.mean(ep_rewards)
         av_a_t[i] = np.mean(log_a_t)
         # output origins
         step_num_ratio[i] = np.sum(np.sum(step_num))
@@ -453,7 +453,7 @@ def run_ms(
     out.append(sims_data)
 
     # add reward data
-    reward_data = [np.mean(av_reward), np.mean(av_ep_reward)]
+    reward_data = [np.mean(av_reward)]
     out.append(reward_data)
 
     # add in sim origin data
