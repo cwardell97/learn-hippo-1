@@ -1,7 +1,7 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-v4_ms-p5_r5-use_V'
-n_epoch=100
+exp_name='Mental-Sims-v3.1_ms-p5_r5-use_V'
+n_epoch=200
 n_branch=4
 
 def_prob=.25
