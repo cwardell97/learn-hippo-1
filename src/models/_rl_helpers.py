@@ -68,12 +68,6 @@ def get_reward_ms(a_t, y_t, penalty):
 
     """
     dk_id = y_t.shape[0]
-    # if y_t is all zeros (delay period), then action target DNE
-    if torch.all(torch.from_numpy(y_t) == 0):
-        # -1 is not in the range of a_t, so r_t = penalty unless a_t == dk
-        a_t_targ = torch.tensor(-1)
-    else:
-        a_t_targ = torch.argmax(torch.from_numpy(y_t))
     # compare action vs. target action
     if a_t == dk_id:
         r_t =  - penalty
