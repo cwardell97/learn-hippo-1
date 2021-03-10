@@ -10,7 +10,7 @@ from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from task.utils import scramble_array, scramble_array_list
 from models import compute_returns, compute_a2c_loss, get_reward_ms
-from utils.io import pickle_load_dict
+from utils.io import pickle_load_dict, unpack_inps_t
 #from torchsummary import summary
 
 ''' check that supervised and cond_i have all been removed '''
@@ -26,6 +26,11 @@ def run_ms(
     training_data = pickle_load_dict(fpath).pop('XY')
     X_train = np.array(training_data[0])
     Y_train = np.array(training_data[1])
+    print("X_train.shape", np.shape(X_train))
+    # get time info
+    T_total = np.shape(X_train)[1]
+    T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
+    enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
     # logger
     log_return, log_pi_ent = 0, 0
@@ -33,8 +38,9 @@ def run_ms(
     log_cond = np.zeros(n_examples,)
     log_dist_a = [[] for _ in range(n_examples)]
     log_targ_a = [[] for _ in range(n_examples)]
-    log_cache = [None] * n_examples
+    log_cache = np.zeros((n_examples,T_part))
     log_X = []
+
     # sim lengths
     log_sim_lengths = np.zeros(n_examples)
     # reward stuff
@@ -50,7 +56,7 @@ def run_ms(
 
     # note that first and second half of x is redudant, only need to show half
     for i in range(n_examples):
-        print(i, "in ", n_examples)
+        #print(i, "in ", n_examples)
         # init logs
         log_a_t = []
         ep_rewards = []
@@ -229,7 +235,7 @@ def run_ms(
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # cache, important for input gate
                 if get_cache:
-                    log_cache_i[t] = cache_t
+                    log_cache_i[t] = unpack_inps_t(cache_t)
 
             elif (seed_num-1)==t:
                 # add in case for t=k, for first seed, but also sims_data
@@ -244,9 +250,10 @@ def run_ms(
 
                 pi_a_t, v_t, hc_t, cache_t = agent.forward(
                     x_it.view(1, 1, -1), hc_t)
+
                 # cache, important for input gate
                 if get_cache:
-                    log_cache_i[t] = cache_t
+                    log_cache_i[t] = unpack_inps_t(cache_t)
 
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
@@ -317,7 +324,7 @@ def run_ms(
                 torch.set_printoptions(profile="full")
                 # cache, important for input gate
                 if get_cache:
-                    log_cache_i[t] = cache_t
+                    log_cache_i[t] = unpack_inps_t(cache_t)
 
                 # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
                 # print("yshape: ", seed_dictY["seed_Y{0}".format(0)].shape)DELETE
@@ -341,9 +348,6 @@ def run_ms(
                 hc_t = cond_manipulation(
                     cond_i, t, event_ends[0], hc_t, agent)
 
-                # cache results for later analysis
-                if get_cache:
-                    log_cache_i[t] = cache_t
                 # for behavioral stuff, only record prediction time steps
                 '''if t % T_part >= pad_len:
                     log_dist_a[i].append(to_sqnp(pi_a_t))
@@ -354,7 +358,7 @@ def run_ms(
                     #for j in range(t,T_total):
                     #    log_dist_a[i].append(0)
                     #    log_targ_a[i].append(0)
-                    print("breaking on: ", t)
+                    #print("breaking on: ", t)
                     break
                 # if not don't know, save origin of output
                 else:
@@ -377,7 +381,7 @@ def run_ms(
 
         # log sim length after t loop
         log_sim_lengths[i] = t
-        print('last t: ', t)
+        #print('last t: ', t)
 
 
         # compute RL loss (just merge these together from two tasks)
@@ -407,7 +411,7 @@ def run_ms(
         log_loss_critic += loss_critic.item() / n_examples
         log_cond[i] = TZ_COND_DICT.inverse[cond_i]
         if get_cache:
-            log_cache[i] = log_cache_i
+            log_cache[i,:] = log_cache_i
 
         # cache averages across example
         av_reward[i] = np.mean(rewards)
@@ -432,10 +436,12 @@ def run_ms(
         print("does it sum:",
         np.sum((no_matches_ratio[i],mem1_matches_ratio[i],mem2_matches_ratio[i])))
         '''
+    # pre-proces cache
+    out_log_cache = np.nanmean(log_cache, axis=0)
     # return cache
     log_dist_a = np.array(log_dist_a)
     log_targ_a = np.array(log_targ_a)
-    results = [log_dist_a, log_targ_a, log_cache, log_cond]
+    results = [log_dist_a, log_targ_a, out_log_cache, log_cond]
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
                log_return, log_pi_ent]
     out = [results, metrics]

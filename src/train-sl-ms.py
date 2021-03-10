@@ -10,7 +10,7 @@ import pdb
 from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_ms import run_ms
-from analysis import compute_behav_metrics, compute_acc, compute_dk
+from analysis import compute_stats, compute_behav_metrics, compute_acc, compute_dk, compute_stats_max
 from vis import plot_pred_acc_full
 from utils.params import P
 from utils.constants import TZ_COND_DICT
@@ -153,7 +153,6 @@ fpath = os.path.join(test_data_dir, test_data_fname)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
 '''
-
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -198,6 +197,7 @@ Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
+log_cache = np.zeros((n_epoch, n_param))
 # simulation lengths
 av_sims_lengs = np.zeros(n_epoch)
 all_sims_lengs = np.zeros((n_epoch, n_examples))
@@ -224,13 +224,14 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     reward_data, sim_origins] = run_ms(
         agent, optimizer,
         task, p, n_examples, tpath,
-        fix_penalty=penalty, get_cache=False,
+        fix_penalty=penalty, get_cache=True,
         learning=True, get_data=True, seed_num=2,
         mem_num=2, counter_fact=False
     )
 
     # unpack output
-    [dist_a, targ_a, log_cache, Log_cond[epoch_id]] = results
+    [dist_a, targ_a, log_cache[epoch_id], Log_cond[epoch_id]] = results
+    print("t-s-l, log_cache shape:", np.shape(log_cache))
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     [av_sims_data, all_sims_data] = sims_data
@@ -278,6 +279,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     pickle_save_dict(test_data_dict, fpath)
 
 
+
 '''plot learning curves'''
 f, ax = plt.subplots(figsize=(10, 9)) #, sharex=True)
 ax.plot(av_sims_lengs, label = 'sim_lengths')
@@ -315,23 +317,49 @@ axes4.set_ylabel('sim length')
 axes4.axhline(0, color='grey', linestyle='--')
 axes4.set_xlabel('trial')
 
-
-
 fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 fig2_path = os.path.join(log_subpath['figs'], 'first_epoch_sims.png')
 fig3_path = os.path.join(log_subpath['figs'], 'last_epoch_sims.png')
 fig4_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
 
+
+n_se = 1
+f5, ax = plt.subplots(2, 1, figsize=(5, 4))
+
+mu_, er_ = compute_stats(log_cache, n_se=n_se, axis=0)
+ax[0].errorbar(
+    x=np.arange(n_param), y=mu_, yerr=er_
+    )
+#ax[0].legend()
+ax[0].set_ylim([-.05, .7])
+ax[0].set_ylabel('input gate value')
+ax[0].set_xlabel('Time')
+ax[0].set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
+#ax[0].xaxis.set_major_formatter(FormatStrFormatter('%d'))
+#ax[0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+ax[0].axvline(0, color='grey', linestyle='--')
+
+mu_, er_ = compute_stats_max(log_cache, n_se=n_se, axis=1)
+ax[1].errorbar(
+    x=np.arange(n_epoch), y=mu_, yerr=er_
+    )
+ax[1].set_ylim([-.05, .7])
+ax[1].set_ylabel('input gate value')
+ax[1].set_xlabel('Time')
+
+sns.despine()
+f.tight_layout()
+
+
+
+
+
+'''
 f.savefig(fig1_path, dpi=100, bbox_to_anchor='tight')
 f2.savefig(fig2_path, dpi=100, bbox_to_anchor='tight')
 f3.savefig(fig3_path, dpi=100, bbox_to_anchor='tight')
 f4.savefig(fig4_path, dpi=100, bbox_to_anchor='tight')
-
-
-
-
-
-
+'''
 
 
 
