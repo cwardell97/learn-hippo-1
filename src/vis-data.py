@@ -25,7 +25,7 @@ from sklearn.decomposition.pca import PCA
 warnings.filterwarnings("ignore")
 sns.set(style='white', palette='colorblind', context='poster')
 gr_pal = sns.color_palette('colorblind')[2:4]
-log_root = '../log/'
+log_root = '/Users/carsonwardell/Desktop/Thesis/log/'
 # log_root = '/tigress/qlu/logs/learn-hippocampus/log'
 all_conds = TZ_COND_DICT.values()
 
