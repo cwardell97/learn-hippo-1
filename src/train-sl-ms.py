@@ -45,8 +45,8 @@ parser.add_argument('--eta', default=0.1, type=float)
 parser.add_argument('--cmpt', default=0.8, type=float)
 parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
-parser.add_argument('--n_epoch', default=200, type=int)
-parser.add_argument('--n_examples', default=256, type=int) #256
+parser.add_argument('--n_epoch', default=5, type=int)
+parser.add_argument('--n_examples', default=10, type=int) #256
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -148,7 +148,7 @@ fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
 
-'''
+
 # hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -156,7 +156,7 @@ train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-m
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
-
+'''
 
 
 
@@ -300,11 +300,20 @@ axes2.set_ylabel('sim length')
 axes2.axhline(0, color='grey', linestyle='--')
 axes2.set_xlabel('trial')
 
+# sim composition
 f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
 axes3.plot(av_mem1_matches_e, label = 'origin: memory 1')
 axes3.plot(av_mem2_matches_e, label = 'origin: memory 2')
 axes3.plot(av_both_matches_e, label = 'origin: both memories')
 axes3.plot(av_no_matches_e, label = 'origin: NA')
+
+print("size mem1 matches:", av_mem1_matches_e)
+print("size mem2 matches:", av_mem2_matches_e)
+print("size both matches:", av_both_matches_e)
+print("size no matches:", av_no_matches_e)
+print("first entry:", av_mem1_matches_e[0])
+
+
 
 axes3.set_ylabel('% of total instances per epoch')
 axes3.set_xlabel('epoch')
@@ -336,7 +345,7 @@ mu_, er_ = compute_stats_max(log_cache, n_se=n_se, axis=1)
 ax[1].errorbar(
     x=np.arange(n_epoch), y=mu_, yerr=er_
     )
-ax[1].set_ylim([-.05, .7])
+#ax[1].set_ylim([-.05, .7])
 ax[1].set_ylabel('input gate value')
 ax[1].set_xlabel('Time')
 
@@ -346,8 +355,8 @@ f5.tight_layout()
 # create fig paths and save
 fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 fig2_path = os.path.join(log_subpath['figs'], 'first_epoch_sims.png')
-fig3_path = os.path.join(log_subpath['figs'], 'last_epoch_sims.png')
-fig4_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
+fig4_path = os.path.join(log_subpath['figs'], 'last_epoch_sims.png')
+fig3_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
 fig5_path = os.path.join(log_subpath['figs'], 'inpt_gate.png')
 
 f.savefig(fig1_path, dpi=100, bbox_to_anchor='tight')

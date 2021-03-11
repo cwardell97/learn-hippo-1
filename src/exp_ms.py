@@ -44,14 +44,13 @@ def run_ms(
     # sim lengths
     log_sim_lengths = np.zeros(n_examples)
     # reward stuff
-    av_a_t = np.zeros(n_examples)
     av_reward = np.zeros(n_examples)
     #av_ep_reward = np.zeros(n_examples)
     # sim origins
     mem1_matches_ratio = np.zeros(n_examples)
     mem2_matches_ratio = np.zeros(n_examples)
     no_matches_ratio = np.zeros(n_examples)
-    step_num_ratio = np.zeros(n_examples)
+    step_num_ratio = np.ones(n_examples)
     both_match_ratio = np.zeros(n_examples)
 
     # note that first and second half of x is redudant, only need to show half
@@ -109,8 +108,9 @@ def run_ms(
 
 
         # init model wm and em
-        penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
-        #penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty) REMOVE
+        penalty_val_p1, penalty_rep_p1 = [torch.tensor(fix_penalty),
+                                          torch.tensor(fix_penalty)]
+
 
         hc_t = agent.get_init_states()
         agent.retrieval_off()
@@ -195,8 +195,8 @@ def run_ms(
                 ep_rewards.append(r_t)
                 '''
 
-        #if i ==5:
-            #pdb.set_trace()
+
+
         '''seed simulation, then predict'''
         for t in range(T_part):
             global X_i_t
@@ -261,9 +261,10 @@ def run_ms(
                 r_t = get_reward_ms(a_t, seed_dictY["seed_Y{0}".format(0)],
                 penalty_val
                 )
+
                 ''' value prints
-                print("t at stage 2: ", t)
                 print("r_t: ", r_t.item())
+                print("t at stage 2: ", t)
                 print("a_t: ", a_t.item())
                 print("p_a_t: ", p_a_t.item())'''
 
@@ -320,6 +321,7 @@ def run_ms(
                 # after delay period, compute loss
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 # get reward, use first Y_seed for DK length arg
+
                 r_t = get_reward_ms(a_t, seed_dictY["seed_Y{0}".format(0)], penalty_val)
                 torch.set_printoptions(profile="full")
                 # cache, important for input gate
@@ -385,6 +387,7 @@ def run_ms(
 
 
         # compute RL loss (just merge these together from two tasks)
+        print("length check", len(rewards)==(t))
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         #print("returns:", returns)
         #print("values:", values)
@@ -414,11 +417,15 @@ def run_ms(
             log_cache[i,:] = log_cache_i
 
         # cache averages across example
-        av_reward[i] = np.mean(rewards)
-        #av_ep_reward[i] = np.mean(ep_rewards)
-        av_a_t[i] = np.mean(log_a_t)
+        av_reward[i] = np.sum(rewards)
+        print("av_reward:", av_reward[i])
+        print("t: ", t)
+        print(i)
+
+        #if t==1 and a_t==4:pdb.set_trace()
         # output origins
-        step_num_ratio[i] = np.sum(np.sum(step_num))
+        if np.sum(np.sum(step_num))!=0:
+            step_num_ratio[i] = np.sum(np.sum(step_num))
         mem1_matches_ratio[i] = np.divide(np.sum(np.sum(mem1_matches)),
                                           step_num_ratio[i])
         mem2_matches_ratio[i] = np.divide(np.sum(np.sum(mem2_matches)),
