@@ -46,7 +46,7 @@ parser.add_argument('--cmpt', default=0.8, type=float)
 parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=5, type=int)
-parser.add_argument('--n_examples', default=10, type=int) #256
+parser.add_argument('--n_examples', default=256, type=int) #256
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -301,7 +301,7 @@ axes2.axhline(0, color='grey', linestyle='--')
 axes2.set_xlabel('trial')
 
 # sim composition
-f3, axes3 = plt.subplots(figsize=(10, 9)) #, sharex=True)
+f3, axes3 = plt.subplots(figsize=(20, 10)) #, sharex=True)
 axes3.plot(av_mem1_matches_e, label = 'origin: memory 1')
 axes3.plot(av_mem2_matches_e, label = 'origin: memory 2')
 axes3.plot(av_both_matches_e, label = 'origin: both memories')
@@ -346,11 +346,12 @@ ax[1].errorbar(
     x=np.arange(n_epoch), y=mu_, yerr=er_
     )
 #ax[1].set_ylim([-.05, .7])
-ax[1].set_ylabel('input gate value')
-ax[1].set_xlabel('Time')
+ax[1].set_ylabel('av max input gate value')
+ax[1].set_xlabel('epochs')
 
 sns.despine()
 f5.tight_layout()
+f.tight_layout()
 
 # create fig paths and save
 fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
