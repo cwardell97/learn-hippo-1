@@ -77,7 +77,7 @@ def get_reward_ms(a_t, y_t, penalty):
     # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
 
-def compute_returns(rewards, gamma=0, normalize=False):
+def compute_returns(rewards, gamma=0, normalize=True):
     """compute return in the standard policy gradient setting.
 
     Parameters
@@ -112,7 +112,7 @@ def compute_returns(rewards, gamma=0, normalize=False):
     return returns
 
 
-def compute_a2c_loss(probs, values, returns, use_V=True):
+def compute_a2c_loss(probs, values, returns, use_V=False):
     """compute the objective node for policy/value networks
 
     Parameters
