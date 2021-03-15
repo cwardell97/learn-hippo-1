@@ -226,7 +226,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         agent, optimizer,
         task, p, n_examples, tpath,
         fix_penalty=penalty, get_cache=True,
-        learning=False, get_data=True, seed_num=2,
+        learning=True, get_data=True, seed_num=2,
         mem_num=2, counter_fact=False
     )
 

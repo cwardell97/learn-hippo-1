@@ -162,7 +162,7 @@ def run_ms(
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
 
-                if t==enc_times and em:
+                if t==enc_times[0] and em:
                     agent.encoding_on()
                 #if not in_2nd_part: REMOVE
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
@@ -200,9 +200,8 @@ def run_ms(
             global X_i_t
 
             # set encoding
-            if t==enc_times and em:
+            if t==enc_times[0] and em:
                 agent.encoding_on()
-                pdb.set_trace()
 
             # init X_i_t @t=0
             if t==0:
