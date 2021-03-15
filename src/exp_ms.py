@@ -19,7 +19,8 @@ def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
         learning=True, get_cache=True, get_data=True,
-        counter_fact=True, em = True, seed_num=2, mem_num=2
+        counter_fact=True, em=True, seed_num=2,
+        mem_num=2, cond='DM'
 ):
 
     # load training data
@@ -45,7 +46,6 @@ def run_ms(
     log_sim_lengths = np.zeros(n_examples)
     # reward stuff
     av_reward = np.zeros(n_examples)
-    #av_ep_reward = np.zeros(n_examples)
     # sim origins
     mem1_matches_ratio = np.zeros(n_examples)
     mem2_matches_ratio = np.zeros(n_examples)
@@ -67,12 +67,7 @@ def run_ms(
 
 
         # pick a condition
-        cond_i = 'DM'
-        # cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
-        # get the example for this trial
-        #X_i, Y_i = X[i], Y[i]
-        # load a single example (maybe just go through iteratively)
-        #j = rd.randint(0,(n_examples_test-1))
+        cond_i = cond
 
         # sample k X & Ys randomly without replacement
         data_sample_ind=np.random.choice(n_examples,mem_num,replace=False)
@@ -90,13 +85,13 @@ def run_ms(
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
 
-        # attach cond flag
-        cond_flag = torch.zeros(T_total, 1)
-        cond_indicator = -1 if cond_i == 'NM' else 1
+        # attach cond flag REMOVE
+        #cond_flag = torch.zeros(T_total, 1)
+        #cond_indicator = -1 if cond_i == 'NM' else 1
         # if attach_cond == 1 then normal, if -1 then reversed
-        cond_flag[-T_part:] = cond_indicator * p.env.attach_cond
-        if p.env.attach_cond != 0:
-            X_i = torch.cat((X_i, cond_flag), 1)
+        #cond_flag[-T_part:] = cond_indicator * p.env.attach_cond
+        #if p.env.attach_cond != 0:
+        #    X_i = torch.cat((X_i, cond_flag), 1)
 
         # prealloc
         loss_sup = 0
@@ -106,10 +101,10 @@ def run_ms(
         log_cache_i[:] = np.NaN
 
 
-        # init model wm and em
+        # set penalty val
         penalty_val_p1, penalty_rep_p1 = [torch.tensor(fix_penalty),
                                           torch.tensor(fix_penalty)]
-
+        # init model wm and em
         hc_t = agent.get_init_states()
         agent.retrieval_on()
         agent.encoding_off()
@@ -193,7 +188,10 @@ def run_ms(
                 ep_rewards.append(r_t)
                 '''
 
-
+        # update WM/EM bsaed on the condition
+        # if distant memory, flush after observations:
+        if cond == 'DM':
+            hc_t = agent.get_init_states()
 
         '''seed simulation, then predict'''
         for t in range(T_part):
@@ -324,8 +322,6 @@ def run_ms(
                     log_cache_i[t] = unpack_inps_t(cache_t)
 
                 # convert model output to onehotinput for t+1 (action, time, total timesteps, total vals)
-                # print("yshape: ", seed_dictY["seed_Y{0}".format(0)].shape)DELETE
-                #print("X_i_t dims: ", np.shape(X_i_t))
                 X_i_t = io_convert(a_t, t, p.env.n_param,
                 seed_dictY["seed_Y{0}".format(0)].shape[0]
                 )
@@ -336,14 +332,6 @@ def run_ms(
                 probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 log_a_t.append(a_t)
-                # compute supervised loss (Don't understand, I can remove, right?)
-                #yhat_t = torch.squeeze(pi_a_t)[:-1]
-                #loss_sup += F.mse_loss(yhat_t, torch.from_numpy(Y_i[t]))
-
-                # if not supervised:
-                # update WM/EM bsaed on the condition
-                hc_t = cond_manipulation(
-                    cond_i, t, event_ends[0], hc_t, agent)
 
                 # for behavioral stuff, only record prediction time steps
                 '''if t % T_part >= pad_len:
@@ -352,10 +340,6 @@ def run_ms(
 
                 # if don't know, break, except if its the first two!
                 if seed_dictY["seed_Y{0}".format(0)].shape[0] == a_t:
-                    #for j in range(t,T_total):
-                    #    log_dist_a[i].append(0)
-                    #    log_targ_a[i].append(0)
-                    #print("breaking on: ", t)
                     break
                 # if not don't know, save origin of output
                 else:
@@ -372,26 +356,16 @@ def run_ms(
                     no_matches.append(n_match)
                     step_num.append(1)
                     both_matches.append(b_match)
-                    #print("m1 matches:", m1_matches)
-                    #print("m2 matches:", m2_matches)
-                    #print("no matches: ", no_matches)
+
 
         # log sim length after t loop
         log_sim_lengths[i] = t
-        #print('last t: ', t)
-
 
         # compute RL loss (just merge these together from two tasks)
         print("length check", len(rewards)==(t))
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
-        #print("returns:", returns)
-        #print("values:", values)
-        #print("probs:", probs)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
-        # if learning and not supervised
-    #    print("example num", i)
-
 
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
@@ -407,7 +381,7 @@ def run_ms(
         log_return += torch.stack(rewards).sum().item() / n_examples
         log_loss_actor += loss_actor.item() / n_examples
         log_loss_critic += loss_critic.item() / n_examples
-        log_cond[i] = TZ_COND_DICT.inverse[cond_i]
+        #log_cond[i] = TZ_COND_DICT.inverse[cond_i]
         if get_cache:
             log_cache[i,:] = log_cache_i
 
