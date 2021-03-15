@@ -19,7 +19,7 @@ def run_ms(
         agent, optimizer, task, p, n_examples, fpath,
         fix_penalty=None, slience_recall_time=None,
         learning=True, get_cache=True, get_data=True,
-        counter_fact=True, seed_num=2, mem_num=2
+        counter_fact=True, em = True, seed_num=2, mem_num=2
 ):
 
     # load training data
@@ -90,7 +90,6 @@ def run_ms(
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
 
-
         # attach cond flag
         cond_flag = torch.zeros(T_total, 1)
         cond_indicator = -1 if cond_i == 'NM' else 1
@@ -111,9 +110,8 @@ def run_ms(
         penalty_val_p1, penalty_rep_p1 = [torch.tensor(fix_penalty),
                                           torch.tensor(fix_penalty)]
 
-
         hc_t = agent.get_init_states()
-        agent.retrieval_off()
+        agent.retrieval_on()
         agent.encoding_off()
 
         '''sample simulation seeds'''
@@ -164,18 +162,18 @@ def run_ms(
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
 
+                if t==enc_times and em:
+                    agent.encoding_on()
                 #if not in_2nd_part: REMOVE
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
 
                 #else: REMOVE
                 #    penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
 
-                # testing condition
-                if slience_recall_time is not None:
-                    slience_recall(t_relative, in_2nd_part,
-                                   slience_recall_time, agent)
-                # whether to encode
-                set_encoding_flag(t, enc_times, cond_i, agent)
+                # testing condition REMOVE
+                #if slience_recall_time is not None:
+                #    slience_recall(t_relative, in_2nd_part,
+                #                   slience_recall_time, agent)
 
                 torch_X_mn = torch.from_numpy(X_mn[t])
                 # forward
@@ -201,6 +199,11 @@ def run_ms(
         for t in range(T_part):
             global X_i_t
 
+            # set encoding
+            if t==enc_times and em:
+                agent.encoding_on()
+                pdb.set_trace()
+
             # init X_i_t @t=0
             if t==0:
                 X_i_t = np.zeros(seed_dictX["seed_X{0}".format(0)].shape)
@@ -215,14 +218,10 @@ def run_ms(
                 #else: REMOVE
                 #    penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
 
-                # testing condition
-                if slience_recall_time is not None:
-                    slience_recall(t_relative, in_2nd_part,
-                                   slience_recall_time, agent)
-
-                # whether to encode
-                set_encoding_flag(t, enc_times, 'NM', agent)
-
+                # testing condition REMOVE
+                #if slience_recall_time is not None:
+                #    slience_recall(t_relative, in_2nd_part,
+                #                   slience_recall_time, agent)
                 # forward (CHANGE: might need torch conversion)
                 torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
                 x_it = append_prev_info(torch_x_i_t.type(torch.FloatTensor),
@@ -239,8 +238,6 @@ def run_ms(
 
             elif (seed_num-1)==t:
                 # add in case for t=k, for first seed, but also sims_data
-                # whether to encode
-                set_encoding_flag(t, enc_times, 'NM', agent)
 
                 # forward (CHANGE: might need torch conversion)
                 torch_x_i_t = torch.from_numpy(seed_dictX["seed_X{0}".format(t)])
@@ -305,12 +302,11 @@ def run_ms(
                 #start prediction task immediately after the last seed (@t=k)
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
 
-                # testing condition
-                if slience_recall_time is not None:
-                    slience_recall(t_relative, in_2nd_part,
-                                   slience_recall_time, agent)
+                # testing condition REMOVE
+                #if slience_recall_time is not None:
+                #    slience_recall(t_relative, in_2nd_part,
+                #                   slience_recall_time, agent)
                 # whether to encode
-                set_encoding_flag(t, enc_times, 'NM', agent)
 
                 torch_x_i_t = torch.from_numpy(X_i_t)
                 # forward
