@@ -229,7 +229,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         task, p, n_examples, tpath,
         fix_penalty=penalty, get_cache=True,
         learning=True, get_data=True, seed_num=2,
-        mem_num=2, counter_fact=False, em = True
+        mem_num=2, counter_fact=False, em = False
     )
 
     # unpack output
