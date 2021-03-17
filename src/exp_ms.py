@@ -121,7 +121,6 @@ def run_ms(
             for t in range(T_part):
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
-
                 set_encoding_ms(t, enc_times, cond, em, agent)
                 #if not in_2nd_part: REMOVE
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
@@ -324,11 +323,11 @@ def run_ms(
         log_sim_lengths[i] = t
 
         # compute RL loss (just merge these together from two tasks)
-        print("length check", len(rewards)==(t))
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
-
+        print('rewards: ', rewards)
+        print("returns: ", returns)
         if learning:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
@@ -616,5 +615,6 @@ def get_seed_dicts(T_part, seed_num, X_dict, Y_dict, counter_fact):
 def set_encoding_ms(t, enc_times, cond, em, agent):
     if t in enc_times and cond != 'NM' and em:
         agent.encoding_on()
+        print("encoding at: ", t)
     else:
         agent.encoding_off()

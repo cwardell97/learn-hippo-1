@@ -148,7 +148,7 @@ fpath = os.path.join(test_data_dir, test_data_fname)
 '''
 
 
-'''
+
 # hardcode pretrained model filepath (local)
 tpath = '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/Users/carsonwardell/Desktop/Thesis/log/training-models-local/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
@@ -157,7 +157,7 @@ train_logsubpath = {'ckpts': '/Users/carsonwardell/Desktop/Thesis/log/training-m
 # hardcode pretrained model filepath (cluster)
 tpath = '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data/epoch-1000/penalty-2/delay-0/srt-None/n256.pkl'
 train_logsubpath = {'ckpts': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/ckpts', 'data': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/data', 'figs': '/tigress/cwardell/logs/learn-hippocampus/log/training-models/p-16_b-4_pad-random/tp-0.25/p_rm_ob_rcl-0.00_enc-0.30/lp-4/enc-cum_size-16/nmem-2/rp-LCA_metric-cosine/h-194_hdec-128/lr-0.0007-eta-0.1/sup_epoch-600/subj-1/figs'}
-
+'''
 
 
 
@@ -175,11 +175,14 @@ scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
 # if data dir does not exsits ... skip
 if agent is None:
     print('Agent DNE')
-
+# save initial params
+orig_params =[]
 # freeze memory controlling layer
 for param in agent.parameters():
     param.requires_grad_ = False
-agent.hpc.requires_grad_ = True
+    orig_params.append(param.detach().numpy())
+#agent.hpc.requires_grad_ = True
+print("param names:", param_names)
 
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
@@ -212,6 +215,9 @@ av_mem2_matches_e = np.zeros(n_epoch)
 av_no_matches_e = np.zeros(n_epoch)
 av_step_num_e = np.zeros(n_epoch)
 av_both_matches_e = np.zeros(n_epoch)
+#param differences
+param_change = np.zeros((n_epoch,len(orig_params)))
+
 
 
 k = 2
@@ -229,7 +235,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         task, p, n_examples, tpath,
         fix_penalty=penalty, get_cache=True,
         learning=True, get_data=True, seed_num=2,
-        mem_num=2, counter_fact=False, em = False
+        mem_num=2, counter_fact=False, em = True
     )
 
     # unpack output
@@ -281,6 +287,13 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     fpath = os.path.join(test_data_dir, test_data_fname)
     pickle_save_dict(test_data_dict, fpath)
 
+    # compare old and new params
+    for idx, param in enumerate(agent.parameters()):
+        param = param.detach().numpy()
+        param_change[epoch_id,idx] = np.sum(np.abs(np.subtract(param,
+        orig_params[idx])))
+
+#print("param_change:", np.sum(param_change, axis=0))
 '''plot learning curves'''
 f, ax = plt.subplots(figsize=(10, 9)) #, sharex=True)
 ax.plot(av_sims_lengs, label = 'sim_lengths')
@@ -350,36 +363,42 @@ ax[1].set_xlabel('epochs')
 
 sns.despine()
 f5.tight_layout()
-f.tight_layout()
 
-'''
-all_sims_lengs
+
+
+
 f6, ax6 = plt.subplots(1, 1, figsize=(5, 4))
-
-mu_, er_ = compute_stats(log_cache, n_se=n_se, axis=0)
-ax[0].errorbar(
-    x=np.arange(n_param), y=mu_, yerr=er_
+mu_ = np.sum(param_change, axis=0)
+#er_ = np.zeros(np.shape(mu_))
+sns.barplot(ax=ax6,
+    x=np.arange(len(mu_)), y=mu_
     )
-'''
+ax6.set_ylabel('cumulative change from initial weights')
+ax6.set_xlabel('param')
+sns.despine()
+f6.tight_layout()
+
 # create fig paths and save
-fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
+fig1_path = os.path.join(log_subpath['figs'], 'ms-lc.png')
 fig2_path = os.path.join(log_subpath['figs'], 'first_epoch_sims.png')
 fig4_path = os.path.join(log_subpath['figs'], 'last_epoch_sims.png')
 fig3_path = os.path.join(log_subpath['figs'], 'sim_composition.png')
 fig5_path = os.path.join(log_subpath['figs'], 'inpt_gate.png')
+fig6_path = os.path.join(log_subpath['figs'], 'weight_change.png')
 
 f.savefig(fig1_path, dpi=100, bbox_to_anchor='tight')
 f2.savefig(fig2_path, dpi=100, bbox_to_anchor='tight')
 f3.savefig(fig3_path, dpi=100, bbox_to_anchor='tight')
 f4.savefig(fig4_path, dpi=100, bbox_to_anchor='tight')
 f5.savefig(fig5_path, dpi=100, bbox_to_anchor='tight')
+f6.savefig(fig6_path, dpi=100, bbox_to_anchor='tight')
 
 
 
 
 
-
-'''plot performance --> just plot don't knows
+'''
+plot performance --> just plot don't knows
 # prep data
 cond_ids = {}
 for cond_name_ in list(TZ_COND_DICT.values()):
