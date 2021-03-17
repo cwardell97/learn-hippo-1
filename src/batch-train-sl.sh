@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-v4.2_use-V-T-gamma_3'
+exp_name='Mental-Sims-v4.2_use-V-T_EV-0'
 n_epoch=150
 n_branch=4
 
@@ -22,7 +22,7 @@ penalty_random=0
 penalty_discrete=1 # never changed
 penalty_onehot=0
 
-normalize_return=1 # never changed
+normalize_return=0 # never changed
 
 for subj_id in 1
 do

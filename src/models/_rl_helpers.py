@@ -77,7 +77,7 @@ def get_reward_ms(a_t, y_t, penalty):
     # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
 
-def compute_returns(rewards, gamma=.3, normalize=True):
+def compute_returns(rewards, gamma=0, normalize=True):
     """compute return in the standard policy gradient setting.
 
     Parameters
