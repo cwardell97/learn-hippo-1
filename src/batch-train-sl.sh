@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-v4.2_use-V-T-no-em'
+exp_name='Mental-Sims-v4.2_use-V-T-all_frozen'
 n_epoch=150
 n_branch=4
 
