@@ -3,6 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 import pdb
 import random as rd
+from scipy.stats import sem
 
 from torch.autograd import Variable
 from analysis import entropy
@@ -40,8 +41,8 @@ def run_ms(
     log_dist_a = [[] for _ in range(n_examples)]
     log_targ_a = [[] for _ in range(n_examples)]
     log_cache = np.zeros((n_examples,T_part))
+    log_cache_sem = np.zeros(T_part)
     log_X = []
-
     # sim lengths
     log_sim_lengths = np.zeros(n_examples)
     # reward stuff
@@ -53,7 +54,7 @@ def run_ms(
     step_num_ratio = np.ones(n_examples)
     both_match_ratio = np.zeros(n_examples)
 
-    # note that first and second half of x is redudant, only need to show half
+    # note that first and second half of x is redudent, only need to show half
     for i in range(n_examples):
         #print(i, "in ", n_examples)
         # init logs
@@ -85,14 +86,6 @@ def run_ms(
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
 
-        # attach cond flag REMOVE
-        #cond_flag = torch.zeros(T_total, 1)
-        #cond_indicator = -1 if cond_i == 'NM' else 1
-        # if attach_cond == 1 then normal, if -1 then reversed
-        #cond_flag[-T_part:] = cond_indicator * p.env.attach_cond
-        #if p.env.attach_cond != 0:
-        #    X_i = torch.cat((X_i, cond_flag), 1)
-
         # prealloc
         loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
@@ -110,38 +103,10 @@ def run_ms(
         agent.encoding_off()
 
         '''sample simulation seeds'''
-        # init seed dicts
-        seed_dictX = {}
-        seed_dictY = {}
-        pair_nums = np.random.choice(T_part,seed_num,replace=False)
+        seed_dictX, seed_dictY = get_seed_dicts(T_part,seed_num,
+                                                X_dict, Y_dict, counter_fact)
 
-        if not counter_fact:
-            # rand X,Y from X_dict/Y_dict for seeds
-            j = np.random.choice(len(X_dict))
-
-            X_j = X_dict["X_{0}".format(j)]
-            Y_j = Y_dict["Y_{0}".format(j)]
-            # select k f/v pairs from within X
-            seed_dict = {}
-
-            for sn in range(seed_num):
-                # load X,Y for specific events
-                seed_dictX["seed_X{0}".format(sn)] = X_j[pair_nums[sn]]
-                seed_dictY["seed_Y{0}".format(sn)] = Y_j[pair_nums[sn]]
-
-        # count_fact --> sample seeds from both events (CHANGE FOR memnum>2)
-        else:
-            for sn in range(seed_num):
-                # even num draw from mem1
-                if (sn%2) == 0:
-                    seed_dictX["seed_X{0}".format(sn)] = X_dict["X_{0}".format(0)][pair_nums[sn]]
-                    seed_dictY["seed_Y{0}".format(sn)] = Y_dict["Y_{0}".format(0)][pair_nums[sn]]
-                # odd from mem2
-                else:
-                    seed_dictX["seed_X{0}".format(sn)] = X_dict["X_{0}".format(1)][pair_nums[sn]]
-                    seed_dictY["seed_Y{0}".format(sn)] = Y_dict["Y_{0}".format(1)][pair_nums[sn]]
-
-        # set var to save length of output for a timestep
+        # save length of output for a timestep
         out_leng = np.add(p.env.n_param,
         seed_dictY["seed_Y{0}".format(0)].shape[0])
 
@@ -157,8 +122,7 @@ def run_ms(
                 t_relative = t % T_part
                 #in_2nd_part = t >= T_part REMOVE
 
-                if t==enc_times[0] and em:
-                    agent.encoding_on()
+                set_encoding_ms(t, enc_times, cond, em, agent)
                 #if not in_2nd_part: REMOVE
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
 
@@ -193,13 +157,11 @@ def run_ms(
         if cond == 'DM':
             hc_t = agent.get_init_states()
 
+        # turn off encoding for MS
+        agent.encoding_off()
         '''seed simulation, then predict'''
         for t in range(T_part):
             global X_i_t
-
-            # set encoding
-            if t==enc_times[0] and em:
-                agent.encoding_on()
 
             # init X_i_t @t=0
             if t==0:
@@ -384,6 +346,7 @@ def run_ms(
         #log_cond[i] = TZ_COND_DICT.inverse[cond_i]
         if get_cache:
             log_cache[i,:] = log_cache_i
+            #log_cache_sem[i] = sem(log_cache_i)
 
         # cache averages across example
         av_reward[i] = np.sum(rewards)
@@ -414,14 +377,17 @@ def run_ms(
         '''
     # pre-proces cache
     out_log_cache = np.nanmean(log_cache, axis=0)
+    log_cache_sem = sem(log_cache, axis=0)
+    print("log_cache_sem dims", np.shape(log_cache_sem))
     # return cache
     log_dist_a = np.array(log_dist_a)
     log_targ_a = np.array(log_targ_a)
-    results = [log_dist_a, log_targ_a, out_log_cache, log_cond]
+    results = [log_dist_a, log_targ_a, out_log_cache, log_cond, log_cache_sem]
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
                log_return, log_pi_ent]
     out = [results, metrics]
 
+    #pdb.set_trace()
     # add in simulation length data
     av_sims_data = np.mean(log_sim_lengths)
     all_sims_data = log_sim_lengths
@@ -609,3 +575,46 @@ def compare_output(X_i_t, memory1, memory2, out_leng):
 
     out = [mem1_matches, mem2_matches, no_matches, both_match]
     return out
+
+def get_seed_dicts(T_part, seed_num, X_dict, Y_dict, counter_fact):
+    "get seeds for mental simulation"
+
+    # init seed dicts
+    seed_dictX = {}
+    seed_dictY = {}
+    pair_nums = np.random.choice(T_part,seed_num,replace=False)
+
+    if not counter_fact:
+        # rand X,Y from X_dict/Y_dict for seeds
+        j = np.random.choice(len(X_dict))
+
+        X_j = X_dict["X_{0}".format(j)]
+        Y_j = Y_dict["Y_{0}".format(j)]
+        # select k f/v pairs from within X
+        seed_dict = {}
+
+        for sn in range(seed_num):
+            # load X,Y for specific events
+            seed_dictX["seed_X{0}".format(sn)] = X_j[pair_nums[sn]]
+            seed_dictY["seed_Y{0}".format(sn)] = Y_j[pair_nums[sn]]
+
+    # count_fact --> sample seeds from both events (CHANGE FOR memnum>2)
+    else:
+        for sn in range(seed_num):
+            # even num draw from mem1
+            if (sn%2) == 0:
+                seed_dictX["seed_X{0}".format(sn)] = X_dict["X_{0}".format(0)][pair_nums[sn]]
+                seed_dictY["seed_Y{0}".format(sn)] = Y_dict["Y_{0}".format(0)][pair_nums[sn]]
+            # odd from mem2
+            else:
+                seed_dictX["seed_X{0}".format(sn)] = X_dict["X_{0}".format(1)][pair_nums[sn]]
+                seed_dictY["seed_Y{0}".format(sn)] = Y_dict["Y_{0}".format(1)][pair_nums[sn]]
+
+    return seed_dictX, seed_dictY
+
+
+def set_encoding_ms(t, enc_times, cond, em, agent):
+    if t in enc_times and cond != 'NM' and em:
+        agent.encoding_on()
+    else:
+        agent.encoding_off()

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-exp_name='Mental-Sims-v4.1_use-V-T'
-n_epoch=200
+exp_name='Mental-Sims-v4.2_use-V-T'
+n_epoch=150
 n_branch=4
 
 def_prob=.25
@@ -26,7 +26,7 @@ normalize_return=1 # never changed
 
 for subj_id in 1
 do
-    for penalty in 4
+    for penalty in 5
     do
         for n_param in 16
         do

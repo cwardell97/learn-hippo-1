@@ -10,7 +10,7 @@ import pdb
 from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_ms import run_ms
-from analysis import compute_stats, compute_behav_metrics, compute_acc, compute_dk, compute_stats_max
+from analysis import compute_stats, compute_behav_metrics, compute_acc, compute_dk, compute_stats_max, n_epoch_inpt_calc
 from vis import plot_pred_acc_full
 from utils.params import P
 from utils.constants import TZ_COND_DICT
@@ -46,7 +46,7 @@ parser.add_argument('--cmpt', default=0.8, type=float)
 parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=5, type=int)
-parser.add_argument('--n_examples', default=256, type=int) #256
+parser.add_argument('--n_examples', default=32, type=int) #256
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -198,7 +198,8 @@ Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
-log_cache = np.zeros((n_epoch, n_param))
+Log_cache = np.zeros((n_epoch, n_param))
+Log_cache_sem = np.zeros((n_epoch, n_param))
 # simulation lengths
 av_sims_lengs = np.zeros(n_epoch)
 all_sims_lengs = np.zeros((n_epoch, n_examples))
@@ -215,6 +216,7 @@ av_both_matches_e = np.zeros(n_epoch)
 
 k = 2
 epoch_id = 0
+print("penalty:", penalty)
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
     print("epoch: ", epoch_id)
@@ -231,8 +233,9 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     )
 
     # unpack output
-    [dist_a, targ_a, log_cache[epoch_id], Log_cond[epoch_id]] = results
-    print("t-s-l, log_cache shape:", np.shape(log_cache))
+    [dist_a, targ_a, Log_cache[epoch_id], Log_cond[epoch_id],
+    Log_cache_sem[epoch_id]] = results
+    print("t-s-l, log_cache_sem shape:", np.shape(Log_cache_sem))
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
     Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     [av_sims_data, all_sims_data] = sims_data
@@ -278,8 +281,6 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     fpath = os.path.join(test_data_dir, test_data_fname)
     pickle_save_dict(test_data_dict, fpath)
 
-
-
 '''plot learning curves'''
 f, ax = plt.subplots(figsize=(10, 9)) #, sharex=True)
 ax.plot(av_sims_lengs, label = 'sim_lengths')
@@ -296,7 +297,7 @@ ax2.legend()
 
 
 f2, axes2 = plt.subplots(figsize=(10, 9)) #, sharex=True)
-axes2.plot(range(n_examples), all_sims_lengs[1,:])
+axes2.plot(range(n_examples), all_sims_lengs[0,:])
 axes2.set_ylabel('sim length')
 axes2.axhline(0, color='grey', linestyle='--')
 axes2.set_xlabel('trial')
@@ -308,14 +309,6 @@ axes3.plot(av_mem2_matches_e, label = 'origin: memory 2')
 axes3.plot(av_both_matches_e, label = 'origin: both memories')
 axes3.plot(av_no_matches_e, label = 'origin: NA')
 
-print("size mem1 matches:", av_mem1_matches_e)
-print("size mem2 matches:", av_mem2_matches_e)
-print("size both matches:", av_both_matches_e)
-print("size no matches:", av_no_matches_e)
-print("first entry:", av_mem1_matches_e[0])
-
-
-
 axes3.set_ylabel('% of total instances per epoch')
 axes3.set_xlabel('epoch')
 axes3.legend()
@@ -326,14 +319,19 @@ axes4.set_ylabel('sim length')
 axes4.axhline(0, color='grey', linestyle='--')
 axes4.set_xlabel('trial')
 
-n_se = 1
-f5, ax = plt.subplots(2, 1, figsize=(5, 4))
 
-mu_, er_ = compute_stats(log_cache, n_se=n_se, axis=0)
+n_e = 1
+n_se = 1
+f5, ax = plt.subplots(2, 1, figsize=(5, 10))
+
+mu_first, er_first, mu_last, er_last = n_epoch_inpt_calc(Log_cache,
+                                                         Log_cache_sem,
+                                                         n_e, axis=0)
 ax[0].errorbar(
-    x=np.arange(n_param), y=mu_, yerr=er_
-    )
-#ax[0].legend()
+    x=np.arange(n_param), y=mu_first, yerr=er_first, label = "first epochs")
+ax[0].errorbar(
+    x=np.arange(n_param), y=mu_last, yerr=er_last, label = "last epochs")
+ax[0].legend()
 ax[0].set_ylim([-.05, .7])
 ax[0].set_ylabel('input gate value')
 ax[0].set_xlabel('Time')
@@ -342,7 +340,7 @@ ax[0].set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
 #ax[0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax[0].axvline(0, color='grey', linestyle='--')
 
-mu_, er_ = compute_stats_max(log_cache, n_se=n_se, axis=1)
+mu_, er_ = compute_stats_max(Log_cache, n_se=n_se, axis=1)
 ax[1].errorbar(
     x=np.arange(n_epoch), y=mu_, yerr=er_
     )
@@ -354,6 +352,15 @@ sns.despine()
 f5.tight_layout()
 f.tight_layout()
 
+'''
+all_sims_lengs
+f6, ax6 = plt.subplots(1, 1, figsize=(5, 4))
+
+mu_, er_ = compute_stats(log_cache, n_se=n_se, axis=0)
+ax[0].errorbar(
+    x=np.arange(n_param), y=mu_, yerr=er_
+    )
+'''
 # create fig paths and save
 fig1_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 fig2_path = os.path.join(log_subpath['figs'], 'first_epoch_sims.png')
